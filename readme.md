@@ -96,7 +96,7 @@ chmod +x build.sh
 Handmatig compileren kan met:
 
 ```bash
-gcc -std=c11 -Wall -Wextra -Wpedantic main.c weapon.c -o main -lncursesw -lm
+gcc -std=c11 -Wall -Wextra -Wpedantic main.c ecs.c weapon.c -o main -lncursesw -lm
 ./main
 ```
 
@@ -124,7 +124,7 @@ De kaart staat in `map.txt` en bestaat uit een raster van 16 bij 16 tekens.
 | `P` | Startpositie van de speler |
 | `E` | Startpositie van een vijand |
 
-Tijdens het laden worden `P` en `E` omgezet naar runtimegegevens. De tekens worden daarna vervangen door lege ruimte. Dit is een voorbeeld van het omzetten van een tekstuele gegevensverzameling naar structs en arrays die de game kan gebruiken.
+Tijdens het laden worden `P` en `E` omgezet naar ECS-entiteiten met bijbehorende componenten. De tekens worden daarna vervangen door lege ruimte. De kaart zelf blijft een raster en is geen verzameling entiteiten.
 
 Een onleesbaar bestand, een regel met een verkeerde lengte, te veel vijanden of een ontbrekende speler zorgt ervoor dat het programma niet start.
 
@@ -133,9 +133,11 @@ Een onleesbaar bestand, een regel met een verkeerde lengte, te veel vijanden of 
 ```text
 .
 ├── build.sh          # Compileren en starten
+├── ecs.c             # Entity lifecycle en componentqueries
+├── ecs.h             # ECS-world, componenten en publieke interface
 ├── game_config.h     # Benoemde instellingen en kleur-ID's
 ├── game_types.h      # Gedeelde structs en enums
-├── main.c            # Laden, raycasting, enemies, combat en game loop
+├── main.c            # Laden, systemen, raycasting en game loop
 ├── map.txt           # Kaartgegevens
 ├── weapon.c          # ASCII-wapen en animatie
 └── weapon.h          # Publieke weapon-functie
@@ -143,9 +145,11 @@ Een onleesbaar bestand, een regel met een verkeerde lengte, te veel vijanden of 
 
 ### Verantwoordelijkheden
 
-- `main.c` beheert de applicatie, ncurses, kaart, raycasting, vijanden en invoer.
+- `ecs.c` beheert het maken, opvragen en vernietigen van entiteiten.
+- `ecs.h` definieert de ECS-world en componentopslag voor maximaal 128 entiteiten.
+- `main.c` beheert de applicatie, ncurses, kaart, raycasting, systemen en invoer.
 - `game_config.h` groepeert instellingen per onderwerp: map, combat, renderer en kleuren.
-- `game_types.h` bevat gedeelde datatypes zoals `Vec2`, `Enemy`, `RayHit` en `ShotResult`.
+- `game_types.h` bevat gedeelde datatypes zoals `Vec2`, `RayHit` en `ShotResult`.
 - `weapon.c` bevat uitsluitend de presentatie en animatie van het wapen.
 - `map.txt` bevat gegevens en geen programmalogica.
 
@@ -155,14 +159,19 @@ Een onleesbaar bestand, een regel met een verkeerde lengte, te veel vijanden of 
 flowchart TD
     Input[Toetsenbord] --> Loop[Game loop]
     Map[map.txt] --> Loader[Map loader]
-    Loader --> World[Map en enemies]
+    Loader --> MapWorld[Kaart]
+    Loader --> ECS[ECS-world en componenten]
     Loop --> Movement[Beweging en collision]
     Loop --> Shooting[Hitscan shooting]
     Loop --> Raycaster[Raycaster]
-    World --> Movement
-    World --> Shooting
-    World --> Raycaster
-    Raycaster --> Renderer[ncurses renderer]
+    Loop --> Renderer[ncurses renderer]
+    ECS --> Movement
+    ECS --> Shooting
+    ECS --> Renderer
+    MapWorld --> Movement
+    MapWorld --> Shooting
+    MapWorld --> Raycaster
+    Raycaster --> Renderer
     Shooting --> Renderer
     Weapon[weapon.c] --> Renderer
     Renderer --> Terminal[Terminal]
@@ -176,21 +185,22 @@ sequenceDiagram
     participant Loop as Game loop
     participant Shoot as Shoot
     participant Ray as CastRay
-    participant Enemy as Enemy-data
+    participant ECS as ECS-world
     participant Render as Renderer
 
     Speler->>Loop: Spatie of F
-    Loop->>Loop: Controleer cooldown en munitie
-    Loop->>Shoot: Shoot(player, direction)
+    Loop->>Shoot: CombatSystem(world, playerEntity)
+    Shoot->>Shoot: Controleer cooldown en munitie
     Shoot->>Ray: Zoek afstand tot eerste muur
     Ray-->>Shoot: RayHit
-    Shoot->>Enemy: Zoek eerste vijand vóór de muur
-    Enemy-->>Shoot: Hit, kill of miss
-    Shoot-->>Loop: ShotResult
-    Loop->>Render: Update HUD, marker en recoil
+    Shoot->>ECS: Query position, health en enemy
+    ECS-->>Shoot: Kandidaat-vijanden
+    Shoot->>ECS: Schade, destroy en spelerstatus bijwerken
+    Shoot-->>Loop: Systeem klaar
+    Loop->>Render: Render ECS-world
 ```
 
-Een ERD is niet van toepassing omdat het project geen relationele database of persistente entiteiten gebruikt.
+Een ERD is niet van toepassing omdat de ECS-entiteiten alleen tijdens het spel bestaan en er geen relationele database is.
 
 ## Belangrijke ontwerpkeuzes
 
@@ -199,6 +209,12 @@ Een ERD is niet van toepassing omdat het project geen relationele database of pe
 Het project gebruikt C11 en een procedurele architectuur. Structs groeperen gegevens, headers beschrijven gedeelde interfaces en bronbestanden scheiden verantwoordelijkheden.
 
 Dit project is geen volledige demonstratie van objectgeoriënteerd programmeren. Encapsulation en modularity worden gedeeltelijk toegepast via modules en interne data. Inheritance en polymorphism worden niet toegepast, omdat die niet natuurlijk bij deze kleine C-codebase passen.
+
+### Entity Component System
+
+De speler en vijanden zijn numerieke entity-ID's. Een bitmasker beschrijft welke componenten ieder entity-ID bezit. Positie, richting, gezondheid en spelerstatus worden in afzonderlijke vaste arrays opgeslagen. Systemen selecteren entiteiten op basis van de benodigde componenten.
+
+Het ECS gebruikt geen dynamische allocatie. Een vernietigde vijand krijgt een leeg componentmasker en wordt daardoor niet langer door combat, rendering of de HUD gevonden. De tegelkaart blijft buiten het ECS omdat collision detection en raycasting het raster rechtstreeks gebruiken.
 
 ### Raycasting
 

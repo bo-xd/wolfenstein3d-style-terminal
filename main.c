@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "ecs.h"
 #include "game_config.h"
 #include "game_types.h"
 #include "weapon.h"
@@ -18,8 +19,6 @@ static const double RENDER_FLOOR_DETAIL_START_RATIO = 0.75;
 static const double RENDER_CEILING_DETAIL_START_RATIO = 0.20;
 
 char map[MAP_HEIGHT][MAP_WIDTH + 1];
-Enemy enemies[MAP_MAX_ENEMIES];
-int enemyCount = 0;
 int colorsEnabled = 0;
 
 void InitColors(void) {
@@ -68,13 +67,15 @@ void InitColors(void) {
 }
 
 // dit opened en leest de file
-int ReadFile(const char *path, Vec2 *player) {
+int ReadFile(const char *path, World *world, Entity *playerEntity) {
   FILE *file = fopen(path, "rb");
   int foundPlayer = 0;
-
-  enemyCount = 0;
+  int enemyCount = 0;
 
   if (!file) return 0;
+
+  EcsInit(world);
+  *playerEntity = ENTITY_NONE;
 
   for (int y = 0; y < MAP_HEIGHT; y++) {
     if (fscanf(file, "%16s", map[y]) != 1 || strlen(map[y]) != MAP_WIDTH) {
@@ -84,8 +85,21 @@ int ReadFile(const char *path, Vec2 *player) {
 
     for (int x = 0; x < MAP_WIDTH; x++) {
       if (map[y][x] == 'P') {
-        player->x = x + 0.5;
-        player->y = y + 0.5;
+        if (*playerEntity == ENTITY_NONE) {
+          *playerEntity = EcsCreate(
+            world,
+            COMPONENT_POSITION | COMPONENT_DIRECTION | COMPONENT_PLAYER
+          );
+          if (*playerEntity == ENTITY_NONE) {
+            fclose(file);
+            return 0;
+          }
+
+          world->direction[*playerEntity] = (Vec2){1.0, 0.0};
+          world->player[*playerEntity].ammo = COMBAT_STARTING_AMMO;
+        }
+
+        world->position[*playerEntity] = (Vec2){x + 0.5, y + 0.5};
         map[y][x] = '.';
         foundPlayer = 1;
       } else if (map[y][x] == 'E') {
@@ -94,10 +108,17 @@ int ReadFile(const char *path, Vec2 *player) {
           return 0;
         }
 
-        enemies[enemyCount].pos.x = x + 0.5;
-        enemies[enemyCount].pos.y = y + 0.5;
-        enemies[enemyCount].health = COMBAT_ENEMY_STARTING_HEALTH;
-        enemies[enemyCount].alive = 1;
+        Entity enemy = EcsCreate(
+          world,
+          COMPONENT_POSITION | COMPONENT_HEALTH | COMPONENT_ENEMY
+        );
+        if (enemy == ENTITY_NONE) {
+          fclose(file);
+          return 0;
+        }
+
+        world->position[enemy] = (Vec2){x + 0.5, y + 0.5};
+        world->health[enemy] = COMBAT_ENEMY_STARTING_HEALTH;
         enemyCount++;
         map[y][x] = '.';
       }
@@ -121,11 +142,13 @@ int IsWall(double x, double y) {
 }
 
 
-int CountAliveEnemies(void) {
+int CountEnemies(const World *world) {
   int alive = 0;
+  const uint32_t required =
+    COMPONENT_POSITION | COMPONENT_HEALTH | COMPONENT_ENEMY;
 
-  for (int i = 0; i < enemyCount; i++) {
-    if (enemies[i].alive) alive++;
+  for (Entity entity = 0; entity < ECS_MAX_ENTITIES; entity++) {
+    if (EcsHas(world, entity, required)) alive++;
   }
   return alive;
 }
@@ -165,17 +188,20 @@ RayHit CastRay(Vec2 pos, Vec2 rayDir) {
   }
 }
 
-void RenderEnemies(Vec2 pos, Vec2 dir, Vec2 plane, int screenHeight, int screenWidth, const double *zBuffer) {
+void RenderEnemySystem(const World *world, Vec2 pos, Vec2 dir, Vec2 plane,
+                       int screenHeight, int screenWidth,
+                       const double *zBuffer) {
   double determinant = plane.x * dir.y - dir.x * plane.y;
   if (fabs(determinant) < 0.0001) return;
   double inverseDeterminant = 1.0 / determinant;
+  const uint32_t required =
+    COMPONENT_POSITION | COMPONENT_HEALTH | COMPONENT_ENEMY;
 
-  for (int i = 0; i < enemyCount; i++) {
-    Enemy enemy = enemies[i];
-    if (!enemy.alive) continue;
+  for (Entity entity = 0; entity < ECS_MAX_ENTITIES; entity++) {
+    if (!EcsHas(world, entity, required)) continue;
 
-    double relativeX = enemy.pos.x - pos.x;
-    double relativeY = enemy.pos.y - pos.y;
+    double relativeX = world->position[entity].x - pos.x;
+    double relativeY = world->position[entity].y - pos.y;
     double transformX = inverseDeterminant * (dir.y * relativeX - dir.x * relativeY);
     double transformY = inverseDeterminant * (-plane.y * relativeX + plane.x * relativeY);
 
@@ -211,7 +237,16 @@ void RenderEnemies(Vec2 pos, Vec2 dir, Vec2 plane, int screenHeight, int screenW
 }
 
 
-void raytrace(Vec2 pos, Vec2 dir, int ammo, int score, int shotTicks, int hitMarkerTicks) {
+void RenderSystem(const World *world, Entity playerEntity) {
+  if (!EcsHas(
+        world,
+        playerEntity,
+        COMPONENT_POSITION | COMPONENT_DIRECTION | COMPONENT_PLAYER
+      )) return;
+
+  Vec2 pos = world->position[playerEntity];
+  Vec2 dir = world->direction[playerEntity];
+  PlayerState player = world->player[playerEntity];
   int screenHeight;
   int screenWidth;
   getmaxyx(stdscr, screenHeight, screenWidth);
@@ -277,19 +312,22 @@ void raytrace(Vec2 pos, Vec2 dir, int ammo, int score, int shotTicks, int hitMar
     }
   }
 
-  RenderEnemies(pos, dir, plane, screenHeight, screenWidth, zBuffer);
+  RenderEnemySystem(
+    world, pos, dir, plane, screenHeight, screenWidth, zBuffer
+  );
 
   chtype markerStyle = colorsEnabled ? COLOR_PAIR(PAIR_WEAPON_FLASH) : A_BOLD;
-  char marker = hitMarkerTicks > 0 ? 'X' : shotTicks > 0 ? '*' : '+';
+  char marker = player.hitMarkerTicks > 0 ? 'X' :
+                player.shotTicks > 0 ? '*' : '+';
   mvaddch(screenHeight / 2, screenWidth / 2,
           marker | markerStyle | A_BOLD);
 
-  DrawWeapon(screenHeight, screenWidth, shotTicks, colorsEnabled);
+  DrawWeapon(screenHeight, screenWidth, player.shotTicks, colorsEnabled);
 
   char hud[128];
   snprintf(hud, sizeof(hud),
            "AMMO %02d  SCORE %04d  ENEMIES %d  POS %.1f,%.1f",
-           ammo, score, CountAliveEnemies(), pos.x, pos.y);
+           player.ammo, player.score, CountEnemies(world), pos.x, pos.y);
 
   chtype hudStyle = colorsEnabled ? COLOR_PAIR(PAIR_HUD) : A_NORMAL;
   attron(hudStyle);
@@ -301,7 +339,15 @@ void raytrace(Vec2 pos, Vec2 dir, int ammo, int score, int shotTicks, int hitMar
 }
 
 // beweeg logic
-void MovePlayer(Vec2 *pos, Vec2 dir, double amount) {
+void MovementSystem(World *world, Entity playerEntity, double amount) {
+  if (!EcsHas(
+        world,
+        playerEntity,
+        COMPONENT_POSITION | COMPONENT_DIRECTION | COMPONENT_PLAYER
+      )) return;
+
+  Vec2 *pos = &world->position[playerEntity];
+  Vec2 dir = world->direction[playerEntity];
   double nextX = pos->x + dir.x * amount;
   double nextY = pos->y + dir.y * amount;
 
@@ -310,21 +356,30 @@ void MovePlayer(Vec2 *pos, Vec2 dir, double amount) {
 }
 
 // camera logic
-void TurnPlayer(Vec2 *dir, double angle) {
+void TurnSystem(World *world, Entity playerEntity, double angle) {
+  if (!EcsHas(
+        world,
+        playerEntity,
+        COMPONENT_DIRECTION | COMPONENT_PLAYER
+      )) return;
+
+  Vec2 *dir = &world->direction[playerEntity];
   double oldX = dir->x;
   dir->x = dir->x * cos(angle) - dir->y * sin(angle);
   dir->y = oldX * sin(angle) + dir->y * cos(angle);
 }
 
-ShotResult Shoot(Vec2 pos, Vec2 dir) {
+ShotResult Shoot(World *world, Vec2 pos, Vec2 dir) {
   double closestHit = CastRay(pos, dir).distance;
-  int target = -1;
+  Entity target = ENTITY_NONE;
+  const uint32_t required =
+    COMPONENT_POSITION | COMPONENT_HEALTH | COMPONENT_ENEMY;
 
-  for (int i = 0; i < enemyCount; i++) {
-    if (!enemies[i].alive) continue;
+  for (Entity entity = 0; entity < ECS_MAX_ENTITIES; entity++) {
+    if (!EcsHas(world, entity, required)) continue;
 
-    double relativeX = enemies[i].pos.x - pos.x;
-    double relativeY = enemies[i].pos.y - pos.y;
+    double relativeX = world->position[entity].x - pos.x;
+    double relativeY = world->position[entity].y - pos.y;
     double forward = relativeX * dir.x + relativeY * dir.y;
     double lateral = fabs(relativeX * dir.y - relativeY * dir.x);
 
@@ -334,26 +389,66 @@ ShotResult Shoot(Vec2 pos, Vec2 dir) {
     double hitDistance = forward - hitOffset;
     if (hitDistance >= 0.0 && hitDistance < closestHit) {
       closestHit = hitDistance;
-      target = i;
+      target = entity;
     }
   }
 
-  if (target < 0) return SHOT_MISS;
+  if (target == ENTITY_NONE) return SHOT_MISS;
 
-  enemies[target].health--;
-  if (enemies[target].health <= 0) {
-    enemies[target].alive = 0;
+  world->health[target]--;
+  if (world->health[target] <= 0) {
+    EcsDestroy(world, target);
     return SHOT_KILL;
   }
 
   return SHOT_HIT;
 }
 
-int main(void) {
-  Vec2 player;
-  Vec2 direction = {1.0, 0.0};
+void CombatSystem(World *world, Entity playerEntity) {
+  if (!EcsHas(
+        world,
+        playerEntity,
+        COMPONENT_POSITION | COMPONENT_DIRECTION | COMPONENT_PLAYER
+      )) return;
 
-  if (!ReadFile("map.txt", &player)) {
+  PlayerState *player = &world->player[playerEntity];
+  if (player->shotCooldown > 0) return;
+
+  player->shotCooldown = COMBAT_SHOT_COOLDOWN;
+  if (player->ammo <= 0) return;
+
+  player->ammo--;
+  player->shotTicks = COMBAT_SHOT_ANIMATION_TICKS;
+
+  ShotResult result = Shoot(
+    world,
+    world->position[playerEntity],
+    world->direction[playerEntity]
+  );
+  if (result == SHOT_KILL) {
+    player->score += COMBAT_KILL_SCORE;
+    player->hitMarkerTicks = COMBAT_SHOT_ANIMATION_TICKS;
+  } else if (result == SHOT_HIT) {
+    player->hitMarkerTicks = COMBAT_SHOT_ANIMATION_TICKS;
+  }
+}
+
+void TimerSystem(World *world) {
+  for (Entity entity = 0; entity < ECS_MAX_ENTITIES; entity++) {
+    if (!EcsHas(world, entity, COMPONENT_PLAYER)) continue;
+
+    PlayerState *player = &world->player[entity];
+    if (player->shotCooldown > 0) player->shotCooldown--;
+    if (player->shotTicks > 0) player->shotTicks--;
+    if (player->hitMarkerTicks > 0) player->hitMarkerTicks--;
+  }
+}
+
+int main(void) {
+  World world;
+  Entity playerEntity;
+
+  if (!ReadFile("map.txt", &world, &playerEntity)) {
     fprintf(stderr, "Could not read map.txt or find P\n");
     return 1;
   }
@@ -367,11 +462,6 @@ int main(void) {
   curs_set(0);
   timeout(RENDER_INPUT_TIMEOUT_MS);
 
-  int ammo = COMBAT_STARTING_AMMO;
-  int score = 0;
-  int shotCooldown = 0;
-  int shotTicks = 0;
-  int hitMarkerTicks = 0;
   int running = 1;
   while (running) {
     int key = getch();
@@ -380,42 +470,28 @@ int main(void) {
       case 'w':
       case 'W':
       case KEY_UP:
-        MovePlayer(&player, direction, PLAYER_MOVE_SPEED);
+        MovementSystem(&world, playerEntity, PLAYER_MOVE_SPEED);
         break;
       case 's':
       case 'S':
       case KEY_DOWN:
-        MovePlayer(&player, direction, -PLAYER_MOVE_SPEED);
+        MovementSystem(&world, playerEntity, -PLAYER_MOVE_SPEED);
         break;
       case 'a':
       case 'A':
       case KEY_LEFT:
-        TurnPlayer(&direction, -PLAYER_TURN_SPEED);
+        TurnSystem(&world, playerEntity, -PLAYER_TURN_SPEED);
         break;
       case 'd':
       case 'D':
       case KEY_RIGHT:
-        TurnPlayer(&direction, PLAYER_TURN_SPEED);
+        TurnSystem(&world, playerEntity, PLAYER_TURN_SPEED);
         break;
       case ' ':
       case 'f':
-      case 'F': {
-        if (shotCooldown > 0) break;
-
-        shotCooldown = COMBAT_SHOT_COOLDOWN;
-        if (ammo <= 0) break;
-
-        ammo--;
-        shotTicks = COMBAT_SHOT_ANIMATION_TICKS;
-        ShotResult result = Shoot(player, direction);
-        if (result == SHOT_KILL) {
-          score += COMBAT_KILL_SCORE;
-          hitMarkerTicks = COMBAT_SHOT_ANIMATION_TICKS;
-        } else if (result == SHOT_HIT) {
-          hitMarkerTicks = COMBAT_SHOT_ANIMATION_TICKS;
-        }
+      case 'F':
+        CombatSystem(&world, playerEntity);
         break;
-      }
       case 'q':
       case 'Q':
       case 27:
@@ -423,11 +499,8 @@ int main(void) {
         break;
     }
 
-    raytrace(player, direction, ammo, score, shotTicks, hitMarkerTicks);
-
-    if (shotCooldown > 0) shotCooldown--;
-    if (shotTicks > 0) shotTicks--;
-    if (hitMarkerTicks > 0) hitMarkerTicks--;
+    RenderSystem(&world, playerEntity);
+    TimerSystem(&world);
   }
 
   endwin();

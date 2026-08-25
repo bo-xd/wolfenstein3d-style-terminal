@@ -5,12 +5,6 @@ typedef struct Vec2 {
   double y;
 } Vec2;
 
-typedef struct Enemy {
-  Vec2 pos;
-  int health;
-  int alive;
-} Enemy;
-
 typedef struct RayHit {
   double distance;
   int side;
