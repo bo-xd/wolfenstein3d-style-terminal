@@ -448,7 +448,7 @@ int main(void) {
   World world;
   Entity playerEntity;
 
-  if (!ReadFile("map.txt", &world, &playerEntity)) {
+  if (!ReadFile("src/assets/map.txt", &world, &playerEntity)) {
     fprintf(stderr, "Could not read map.txt or find P\n");
     return 1;
   }
