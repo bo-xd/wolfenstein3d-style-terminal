@@ -10,6 +10,10 @@
 #define FOV 0.66
 #define MOVE_SPEED 0.20
 #define TURN_SPEED 0.12
+#define WALL_SHADE_COUNT 16
+#define CUSTOM_WALL_COLOR_START 16
+#define FLOOR_PAIR 17
+#define HUD_PAIR 18
 
 typedef struct vec2 {
   double x;
@@ -17,6 +21,35 @@ typedef struct vec2 {
 } vec2;
 
 char map[MAP_HEIGHT][MAP_WIDTH + 1];
+int colorsEnabled = 0;
+
+
+void InitColors(void) {
+  if (!has_colors() || start_color() == ERR) return;
+
+  short wallColors[WALL_SHADE_COUNT];
+  for (int shade = 0; shade < WALL_SHADE_COUNT; shade++) {
+    wallColors[shade] = COLOR_WHITE;
+  }
+
+  if (can_change_color() && COLORS >= CUSTOM_WALL_COLOR_START + WALL_SHADE_COUNT) {
+    for (int shade = 0; shade < WALL_SHADE_COUNT; shade++) {
+      short color = CUSTOM_WALL_COLOR_START + shade;
+      short gray = (short)(800 - (shade * 740 / (WALL_SHADE_COUNT - 1)));
+
+      if (init_color(color, gray, gray, gray) == OK) {
+        wallColors[shade] = color;
+      }
+    }
+  }
+
+  for (int shade = 0; shade < WALL_SHADE_COUNT; shade++) {
+    init_pair((short)(shade + 1), wallColors[shade], COLOR_BLACK);
+  }
+  init_pair(FLOOR_PAIR, COLOR_BLUE, COLOR_BLACK);
+  init_pair(HUD_PAIR, COLOR_WHITE, COLOR_BLACK);
+  colorsEnabled = 1;
+}
 
 // dit opened en leest de file
 int ReadFile(const char *path, vec2 *player) {
@@ -137,10 +170,9 @@ void raytrace(vec2 pos, vec2 dir) {
     if (wallTop < 0) wallTop = 0;
     if (wallBottom >= screenHeight) wallBottom = screenHeight - 1;
 
-    const char shades[] = "@#*+-.";
-    int shade = (int)(distance / 2.0) + side;
-    int shadeCount = (int)(sizeof(shades) - 1);
-    if (shade >= shadeCount) shade = shadeCount - 1;
+    const char shades[WALL_SHADE_COUNT + 1] = "@%#8&$0?*+=-:,.`";
+    int shade = (int)(distance * 1.5) + side * 2;
+    if (shade >= WALL_SHADE_COUNT) shade = WALL_SHADE_COUNT - 1;
 
     for (int y = 0; y < screenHeight; y++) {
       char pixel = ' ';
@@ -151,15 +183,20 @@ void raytrace(vec2 pos, vec2 dir) {
         pixel = y > screenHeight * 3 / 4 ? '.' : '-';
       }
       
-      if (pixel == '+') {
-        mvaddch(y, x, pixel | COLOR_PAIR(1));
-      } else {
-        mvaddch(y,x, pixel | COLOR_PAIR(2));
+      chtype style = 0;
+      if (colorsEnabled && y >= wallTop && y <= wallBottom) {
+        style = COLOR_PAIR(shade + 1);
+      } else if (colorsEnabled && y > wallBottom) {
+        style = COLOR_PAIR(FLOOR_PAIR);
       }
+
+      mvaddch(y, x, pixel | style);
     }
   }
 
+  attron(colorsEnabled ? COLOR_PAIR(HUD_PAIR) : A_NORMAL);
   mvprintw(0, 0, "(%.1f, %.1f)", pos.x, pos.y);
+  attroff(colorsEnabled ? COLOR_PAIR(HUD_PAIR) : A_NORMAL);
   refresh();
 }
 
@@ -187,11 +224,7 @@ int main(void) {
   }
 
   initscr();
-  start_color();
-  
-  // color pairs
-  init_pair(1, COLOR_BLUE, COLOR_BLACK);
-  init_pair(2, COLOR_RED, COLOR_BLACK);
+  InitColors();
 
   cbreak();
   noecho();
