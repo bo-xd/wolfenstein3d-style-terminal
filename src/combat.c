@@ -2,11 +2,12 @@
 
 #include "combat.h"
 #include "game_config.h"
+#include "raycast.h"
 
 static const double ENEMY_RADIUS = 0.30;
 
-static ShotResult Shoot(World *world, Vec2 pos, Vec2 dir, RaycastFunction castRay) {
-  double closestHit = castRay(pos, dir).distance;
+static ShotResult Shoot(World *world, Vec2 pos, Vec2 dir, const GameMap *map) {
+  double closestHit = CastRay(map, pos, dir).distance;
   Entity target = ENTITY_NONE;
   const uint32_t required = COMPONENT_POSITION | COMPONENT_HEALTH | COMPONENT_ENEMY;
 
@@ -46,12 +47,12 @@ int CombatTryFire(PlayerState *player) {
   return 1;
 }
 
-void CombatSystem(World *world, Entity playerEntity, RaycastFunction castRay) {
+void CombatSystem(World *world, Entity playerEntity, const GameMap *map) {
   const uint32_t required = COMPONENT_POSITION | COMPONENT_DIRECTION | COMPONENT_PLAYER;
   if (!EcsHas(world, playerEntity, required) || !CombatTryFire(&world->player[playerEntity])) return;
 
   PlayerState *player = &world->player[playerEntity];
-  ShotResult result = Shoot(world, world->position[playerEntity], world->direction[playerEntity], castRay);
+  ShotResult result = Shoot(world, world->position[playerEntity], world->direction[playerEntity], map);
   if (result == SHOT_KILL) player->score += COMBAT_KILL_SCORE;
   if (result != SHOT_MISS) player->hitMarkerTicks = COMBAT_SHOT_ANIMATION_TICKS;
 }

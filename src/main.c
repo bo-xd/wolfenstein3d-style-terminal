@@ -8,17 +8,18 @@
 #include "game_config.h"
 #include "game_types.h"
 #include "weapon.h"
+#include "raycast.h"
+#include "map.h"
+
 
 static const double PLAYER_CAMERA_FOV = 0.66;
 static const double PLAYER_MOVE_SPEED = 0.20;
 static const double PLAYER_TURN_SPEED = 0.12;
-static const double RENDER_RAY_INFINITY = 1e30;
 static const double RENDER_MIN_WALL_DISTANCE = 0.001;
 static const double RENDER_WALL_SHADE_DISTANCE_SCALE = 1.5;
 static const double RENDER_FLOOR_DETAIL_START_RATIO = 0.75;
 static const double RENDER_CEILING_DETAIL_START_RATIO = 0.20;
 
-char map[MAP_HEIGHT][MAP_WIDTH + 1];
 int colorsEnabled = 0;
 
 void InitColors(void) {
@@ -67,7 +68,7 @@ void InitColors(void) {
 }
 
 // dit opened en leest de file
-int ReadFile(const char *path, World *world, Entity *playerEntity) {
+int ReadFile(const char *path, GameMap *map, World *world, Entity *playerEntity) {
   FILE *file = fopen(path, "rb");
   int foundPlayer = 0;
   int enemyCount = 0;
@@ -78,13 +79,13 @@ int ReadFile(const char *path, World *world, Entity *playerEntity) {
   *playerEntity = ENTITY_NONE;
 
   for (int y = 0; y < MAP_HEIGHT; y++) {
-    if (fscanf(file, "%16s", map[y]) != 1 || strlen(map[y]) != MAP_WIDTH) {
+    if (fscanf(file, "%16s", map->tiles[y]) != 1 || strlen(map->tiles[y]) != MAP_WIDTH) {
       fclose(file);
       return 0;
     }
 
     for (int x = 0; x < MAP_WIDTH; x++) {
-      if (map[y][x] == 'P') {
+      if (map->tiles[y][x] == 'P') {
         if (*playerEntity == ENTITY_NONE) {
           *playerEntity = EcsCreate(
             world,
@@ -100,9 +101,9 @@ int ReadFile(const char *path, World *world, Entity *playerEntity) {
         }
 
         world->position[*playerEntity] = (Vec2){x + 0.5, y + 0.5};
-        map[y][x] = '.';
+        map->tiles[y][x] = '.';
         foundPlayer = 1;
-      } else if (map[y][x] == 'E') {
+      } else if (map->tiles[y][x] == 'E') {
         if (enemyCount >= MAP_MAX_ENEMIES) {
           fclose(file);
           return 0;
@@ -120,7 +121,7 @@ int ReadFile(const char *path, World *world, Entity *playerEntity) {
         world->position[enemy] = (Vec2){x + 0.5, y + 0.5};
         world->health[enemy] = COMBAT_ENEMY_STARTING_HEALTH;
         enemyCount++;
-        map[y][x] = '.';
+        map->tiles[y][x] = '.';
       }
     }
   }
@@ -128,19 +129,6 @@ int ReadFile(const char *path, World *world, Entity *playerEntity) {
   fclose(file);
   return foundPlayer;
 }
-
-// muur collision check
-int IsWall(double x, double y) {
-  int mapX = (int)x;
-  int mapY = (int)y;
-
-  if (mapX < 0 || mapX >= MAP_WIDTH || mapY < 0 || mapY >= MAP_HEIGHT) {
-    return 1;
-  }
-
-  return map[mapY][mapX] == '#';
-}
-
 
 int CountEnemies(const World *world) {
   int alive = 0;
@@ -154,39 +142,7 @@ int CountEnemies(const World *world) {
 }
 
 
-RayHit CastRay(Vec2 pos, Vec2 rayDir) {
-  int mapX = (int)pos.x;
-  int mapY = (int)pos.y;
-  double deltaX = rayDir.x == 0.0 ? RENDER_RAY_INFINITY : fabs(1.0 / rayDir.x);
-  double deltaY = rayDir.y == 0.0 ? RENDER_RAY_INFINITY : fabs(1.0 / rayDir.y);
-  int stepX = rayDir.x < 0.0 ? -1 : 1;
-  int stepY = rayDir.y < 0.0 ? -1 : 1;
-  double sideX = rayDir.x < 0.0
-    ? (pos.x - mapX) * deltaX
-    : (mapX + 1.0 - pos.x) * deltaX;
-  double sideY = rayDir.y < 0.0
-    ? (pos.y - mapY) * deltaY
-    : (mapY + 1.0 - pos.y) * deltaY;
-  int side = 0;
 
-  for (;;) {
-    if (sideX < sideY) {
-      sideX += deltaX;
-      mapX += stepX;
-      side = 0;
-    } else {
-      sideY += deltaY;
-      mapY += stepY;
-      side = 1;
-    }
-
-    if (mapX < 0 || mapX >= MAP_WIDTH || mapY < 0 || mapY >= MAP_HEIGHT ||
-        map[mapY][mapX] == '#') {
-      double distance = side == 0 ? sideX - deltaX : sideY - deltaY;
-      return (RayHit){distance, side};
-    }
-  }
-}
 
 void RenderEnemySystem(const World *world, Vec2 pos, Vec2 dir, Vec2 plane,
                        int screenHeight, int screenWidth,
@@ -237,7 +193,7 @@ void RenderEnemySystem(const World *world, Vec2 pos, Vec2 dir, Vec2 plane,
 }
 
 
-void RenderSystem(const World *world, Entity playerEntity) {
+void RenderSystem(const World *world, Entity playerEntity, const GameMap *map) {
   if (!EcsHas(
         world,
         playerEntity,
@@ -269,7 +225,7 @@ void RenderSystem(const World *world, Entity playerEntity) {
       dir.y + plane.y * cameraX
     };
 
-    RayHit hit = CastRay(pos, rayDir);
+    RayHit hit = CastRay(map, pos, rayDir);
     double distance = hit.distance;
     if (distance < RENDER_MIN_WALL_DISTANCE) distance = RENDER_MIN_WALL_DISTANCE;
     zBuffer[x] = distance;
@@ -339,7 +295,7 @@ void RenderSystem(const World *world, Entity playerEntity) {
 }
 
 // beweeg logic
-void MovementSystem(World *world, Entity playerEntity, double amount) {
+void MovementSystem(World *world, Entity playerEntity, const GameMap *map, double amount) {
   if (!EcsHas(
         world,
         playerEntity,
@@ -351,8 +307,8 @@ void MovementSystem(World *world, Entity playerEntity, double amount) {
   double nextX = pos->x + dir.x * amount;
   double nextY = pos->y + dir.y * amount;
 
-  if (!IsWall(nextX, pos->y)) pos->x = nextX;
-  if (!IsWall(pos->x, nextY)) pos->y = nextY;
+  if (!MapIsWall(map, nextX, pos->y)) pos->x = nextX;
+  if (!MapIsWall(map, pos->x, nextY)) pos->y = nextY;
 }
 
 // camera logic
@@ -370,10 +326,11 @@ void TurnSystem(World *world, Entity playerEntity, double angle) {
 }
 
 int main(void) {
+  GameMap map;
   World world;
   Entity playerEntity;
 
-  if (!ReadFile("src/assets/map.txt", &world, &playerEntity)) {
+  if (!ReadFile("src/assets/map.txt", &map, &world, &playerEntity)) {
     fprintf(stderr, "Could not read map.txt or find P\n");
     return 1;
   }
@@ -395,12 +352,12 @@ int main(void) {
       case 'w':
       case 'W':
       case KEY_UP:
-        MovementSystem(&world, playerEntity, PLAYER_MOVE_SPEED);
+        MovementSystem(&world, playerEntity, &map, PLAYER_MOVE_SPEED);
         break;
       case 's':
       case 'S':
       case KEY_DOWN:
-        MovementSystem(&world, playerEntity, -PLAYER_MOVE_SPEED);
+        MovementSystem(&world, playerEntity, &map, -PLAYER_MOVE_SPEED);
         break;
       case 'a':
       case 'A':
@@ -415,7 +372,7 @@ int main(void) {
       case ' ':
       case 'f':
       case 'F':
-        CombatSystem(&world, playerEntity, CastRay);
+        CombatSystem(&world, playerEntity, &map);
         break;
       case 'q':
       case 'Q':
@@ -424,7 +381,7 @@ int main(void) {
         break;
     }
 
-    RenderSystem(&world, playerEntity);
+    RenderSystem(&world, playerEntity, &map);
     CombatTimerSystem(&world);
   }
 

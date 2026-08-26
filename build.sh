@@ -9,7 +9,7 @@ if [ "${1:-}" = "test" ]; then
     testName=${testFile##*/}
     testProgram="/tmp/wolf-${testName%.c}-test"
     echo "Testing $testFile"
-    "$compiler" -std=c11 -Wall -Wextra -Wpedantic -Isrc "$testFile" src/combat.c src/ecs.c src/weapon.c -o "$testProgram" -lncursesw -lm
+    "$compiler" -std=c11 -Wall -Wextra -Wpedantic -Isrc "$testFile" src/combat.c src/ecs.c src/map.c src/raycast.c -o "$testProgram" -lm
     "$testProgram"
   done
   echo "All tests passed"
@@ -18,6 +18,6 @@ fi
 
 compiler="${1:-gcc}"
 
-"$compiler" -std=c11 -Wall -Wextra -Wpedantic src/main.c src/combat.c src/ecs.c src/weapon.c -o main -lncursesw -lm
+"$compiler" -std=c11 -Wall -Wextra -Wpedantic src/main.c src/combat.c src/ecs.c src/weapon.c src/raycast.c src/map.c -o main -lncursesw -lm
 
 ./main

@@ -1,9 +1,8 @@
 #pragma once
 
 #include "ecs.h"
-
-typedef RayHit (*RaycastFunction)(Vec2 pos, Vec2 direction);
+#include "map.h"
 
 int CombatTryFire(PlayerState *player);
-void CombatSystem(World *world, Entity playerEntity, RaycastFunction castRay);
+void CombatSystem(World *world, Entity playerEntity, const GameMap *map);
 void CombatTimerSystem(World *world);

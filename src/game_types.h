@@ -5,9 +5,14 @@ typedef struct Vec2 {
   double y;
 } Vec2;
 
+typedef enum RaySide {
+  RAY_SIDE_X,
+  RAY_SIDE_Y
+} RaySide;
+
 typedef struct RayHit {
   double distance;
-  int side;
+  RaySide side;
 } RayHit;
 
 typedef enum ShotResult {

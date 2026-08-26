@@ -96,7 +96,7 @@ chmod +x build.sh
 Handmatig compileren kan met:
 
 ```bash
-gcc -std=c11 -Wall -Wextra -Wpedantic src/main.c src/combat.c src/ecs.c src/weapon.c -o main -lncursesw -lm
+gcc -std=c11 -Wall -Wextra -Wpedantic src/main.c src/combat.c src/ecs.c src/map.c src/raycast.c src/weapon.c -o main -lncursesw -lm
 ./main
 ```
 
@@ -157,8 +157,12 @@ Een onleesbaar bestand, een regel met een verkeerde lengte, te veel vijanden of 
 ├── ecs.h             # ECS-world, componenten en publieke interface
 ├── game_config.h     # Benoemde instellingen en kleur-ID's
 ├── game_types.h      # Gedeelde structs en enums
-├── main.c            # Laden, systemen, raycasting en game loop
+├── main.c            # Laden, rendering, invoer en game loop
+├── map.c             # Collisioncontrole voor de kaart
+├── map.h             # GameMap-type en publieke mapinterface
 ├── map.txt           # Kaartgegevens
+├── raycast.c         # DDA-raycasting
+├── raycast.h         # Publieke raycastinginterface
 ├── weapon.c          # ASCII-wapen en animatie
 └── weapon.h          # Publieke weapon-functie
 ```
@@ -169,7 +173,9 @@ Een onleesbaar bestand, een regel met een verkeerde lengte, te veel vijanden of 
 - `combat.h` beschrijft de publieke combat-interface.
 - `ecs.c` beheert het maken, opvragen en vernietigen van entiteiten.
 - `ecs.h` definieert de ECS-world en componentopslag voor maximaal 128 entiteiten.
-- `main.c` beheert de applicatie, ncurses, kaart, raycasting, rendering en invoer.
+- `main.c` beheert de applicatie, ncurses, kaartladen, rendering en invoer.
+- `map.c` beheert collisioncontrole op een `GameMap`.
+- `raycast.c` berekent muurafstanden en geraakte zijden met DDA.
 - `game_config.h` groepeert instellingen per onderwerp: map, combat, renderer en kleuren.
 - `game_types.h` bevat gedeelde datatypes zoals `Vec2`, `RayHit` en `ShotResult`.
 - `weapon.c` bevat uitsluitend de presentatie en animatie van het wapen.
