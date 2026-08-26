@@ -1,0 +1,22 @@
+name: Tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        compiler: [gcc, clang]
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y gcc clang libncurses-dev
+
+      - name: Run tests
+        run: ./build.sh test ${{ matrix.compiler }}
