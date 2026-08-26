@@ -96,11 +96,29 @@ chmod +x build.sh
 Handmatig compileren kan met:
 
 ```bash
-gcc -std=c11 -Wall -Wextra -Wpedantic main.c ecs.c weapon.c -o main -lncursesw -lm
+gcc -std=c11 -Wall -Wextra -Wpedantic src/main.c src/combat.c src/ecs.c src/weapon.c -o main -lncursesw -lm
 ./main
 ```
 
 Het programma verwacht dat `map.txt` vanuit de huidige werkmap beschikbaar is.
+
+Alle niet-lege tests uitvoeren met GCC of Clang:
+
+```bash
+./build.sh test
+./build.sh test clang
+```
+
+### Met Docker
+
+Docker compileert het programma in een aparte buildfase en maakt daarna een image met alleen het spel en de benodigde runtimebibliotheek:
+
+```bash
+docker build -t wolf-terminal .
+docker run --rm -it wolf-terminal
+```
+
+De opties `-it` zijn nodig omdat ncurses een interactieve terminal gebruikt.
 
 ## Besturing
 
@@ -133,6 +151,8 @@ Een onleesbaar bestand, een regel met een verkeerde lengte, te veel vijanden of 
 ```text
 .
 ├── build.sh          # Compileren en starten
+├── combat.c          # Munitie, hits, score en combat-timers
+├── combat.h          # Publieke combat-interface
 ├── ecs.c             # Entity lifecycle en componentqueries
 ├── ecs.h             # ECS-world, componenten en publieke interface
 ├── game_config.h     # Benoemde instellingen en kleur-ID's
@@ -145,9 +165,11 @@ Een onleesbaar bestand, een regel met een verkeerde lengte, te veel vijanden of 
 
 ### Verantwoordelijkheden
 
+- `combat.c` beheert munitie, cooldowns, hits, kills en score.
+- `combat.h` beschrijft de publieke combat-interface.
 - `ecs.c` beheert het maken, opvragen en vernietigen van entiteiten.
 - `ecs.h` definieert de ECS-world en componentopslag voor maximaal 128 entiteiten.
-- `main.c` beheert de applicatie, ncurses, kaart, raycasting, systemen en invoer.
+- `main.c` beheert de applicatie, ncurses, kaart, raycasting, rendering en invoer.
 - `game_config.h` groepeert instellingen per onderwerp: map, combat, renderer en kleuren.
 - `game_types.h` bevat gedeelde datatypes zoals `Vec2`, `RayHit` en `ShotResult`.
 - `weapon.c` bevat uitsluitend de presentatie en animatie van het wapen.

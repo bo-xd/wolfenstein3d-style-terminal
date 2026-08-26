@@ -17,7 +17,7 @@ Dit document bevat onderdelen die nog niet daadwerkelijk in het project aanwezig
 - [ ] `CastRay` testen op afstand en geraakte muurzijde.
 - [ ] Hits, misses, wall occlusion, damage en kills testen.
 - [ ] Gedrag bij nul munitie testen.
-- [ ] Builds uitvoeren met GCC en Clang.
+- [X] Builds uitvoeren met GCC en Clang.
 - [ ] AddressSanitizer gebruiken.
 - [ ] UndefinedBehaviorSanitizer gebruiken.
 - [ ] Static analysis uitvoeren met bijvoorbeeld `clang-tidy`.
@@ -26,7 +26,7 @@ Dit document bevat onderdelen die nog niet daadwerkelijk in het project aanwezig
 
 ## Git en DevOps
 
-- [ ] Kleine en duidelijk beschreven commits maken.
+- [X] Kleine en duidelijk beschreven commits maken.
 - [ ] GitHub Issues of een backlog gebruiken.
 - [ ] Featurebranches gebruiken voor grotere wijzigingen.
 - [ ] Pull requests en code reviews aantonen.

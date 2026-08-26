@@ -1,3 +1,23 @@
-gcc -std=c11 -Wall -Wextra -Wpedantic src/main.c src/ecs.c src/weapon.c -o main -lncursesw -lm
+#!/bin/sh
+
+set -e
+
+if [ "${1:-}" = "test" ]; then
+  compiler="${2:-gcc}"
+  for testFile in tests/*.c; do
+    [ -s "$testFile" ] || continue
+    testName=${testFile##*/}
+    testProgram="/tmp/wolf-${testName%.c}-test"
+    echo "Testing $testFile"
+    "$compiler" -std=c11 -Wall -Wextra -Wpedantic -Isrc "$testFile" src/combat.c src/ecs.c src/weapon.c -o "$testProgram" -lncursesw -lm
+    "$testProgram"
+  done
+  echo "All tests passed"
+  exit 0
+fi
+
+compiler="${1:-gcc}"
+
+"$compiler" -std=c11 -Wall -Wextra -Wpedantic src/main.c src/combat.c src/ecs.c src/weapon.c -o main -lncursesw -lm
 
 ./main
