@@ -1,0 +1,26 @@
+name: Clang-Tidy
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  clang-tidy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y clang-tidy libncurses-dev
+
+      - name: Run clang-tidy
+        run: >-
+          clang-tidy
+          src/main.c src/combat.c src/ecs.c src/map.c src/raycast.c src/weapon.c
+          --checks='-*,clang-analyzer-*,-clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling'
+          --warnings-as-errors='clang-analyzer-*'
+          -- -std=c11 -Wall -Wextra -Wpedantic -Isrc

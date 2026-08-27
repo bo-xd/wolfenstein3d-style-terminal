@@ -310,7 +310,7 @@ Er worden geen wachtwoorden, persoonsgegevens, tokens of andere vertrouwelijke g
 
 ### Huidige situatie
 
-Het project wordt momenteel handmatig getest en met strenge compilerwaarschuwingen gebouwd. Er is nog geen geautomatiseerde testsuite of CI-pipeline. Dat is een bekende kwaliteitsbeperking en wordt niet verborgen.
+Het project heeft geautomatiseerde C-tests en GitHub Actions-workflows. Bij iedere push en pull request draaien de tests met GCC en Clang en controleert een aparte workflow de broncode met `clang-tidy`.
 
 ### Handmatige controles
 
@@ -332,10 +332,11 @@ Het project wordt momenteel handmatig getest en met strenge compilerwaarschuwing
 - Afstanden en zijden die `CastRay` teruggeeft.
 - Hits, misses, wall occlusion en kills.
 - Gedrag bij nul munitie.
-- Bouwen met GCC en Clang.
-- Uitvoeren met AddressSanitizer en UndefinedBehaviorSanitizer.
+- Mapvalidatie met een geldige map, ontbrekende speler, verkeerde breedte en ontbrekend bestand.
+- Bouwen en testen met GCC en Clang.
+- Static analysis met `clang-tidy`.
 
-Een toekomstige GitHub Actions-workflow kan bij iedere push compileren en tests uitvoeren.
+AddressSanitizer en UndefinedBehaviorSanitizer zijn nog niet aan de CI-pipeline toegevoegd.
 
 ## Security en SSDLC
 
@@ -400,7 +401,7 @@ De code, kaart en ASCII-weergave in deze repository zijn voor dit oefenproject g
 
 `ncurses` is een externe dependency en valt onder de eigen licentievoorwaarden van dat project.
 
-Er staat momenteel geen afzonderlijk `LICENSE`-bestand in deze repository. Zonder expliciete licentie ontstaan niet automatisch rechten voor anderen om de code te kopiëren, wijzigen of verspreiden. Voor openbare distributie moet de eigenaar bewust een passende licentie kiezen en een `LICENSE`-bestand toevoegen.
+De projectcode valt onder de GNU General Public License v3.0 in het bestand `LICENSE`. Externe dependencies, waaronder ncurses, behouden hun eigen licentievoorwaarden.
 
 ## Risicoanalyse
 
@@ -447,22 +448,20 @@ Tijdsdruk, samenwerking en workload zijn op dit moment niet meetbaar vastgelegd.
 - Er zijn geen pickups, deuren, geluiden of meerdere levels.
 - Munitie kan niet worden aangevuld.
 - Er is geen savegame.
-- Er zijn nog geen automatische tests.
-- Er is nog geen CI-pipeline.
+- Hits, misses, wall occlusion, damage en kills worden nog niet automatisch getest.
+- Sanitizers draaien nog niet in de CI-pipeline.
 - De werking op Windows is niet onderzocht.
 - Instellingen en toetsen zijn niet configureerbaar.
 - De game gebruikt globale state en is niet ontworpen als herbruikbare engine.
 
 ## Mogelijke vervolgstappen
 
-1. Unit tests en een CI-workflow toevoegen.
-2. Mapvalidatie verder isoleren en testen.
+1. Combatgevallen zoals hits, misses, occlusion, damage en kills testen.
+2. AddressSanitizer en UndefinedBehaviorSanitizer aan CI toevoegen.
 3. Enemies laten bewegen met eenvoudige AI.
 4. Deuren, pickups en meerdere levels toevoegen.
 5. Besturing en kleuren configureerbaar maken.
-6. Sanitizers en static analysis standaard in de build opnemen.
-7. Een releaseproces met versienummers en changelog invoeren.
-8. Een passende softwarelicentie kiezen.
+6. Een releaseproces met versienummers en changelog invoeren.
 
 ## Definition of Done
 
