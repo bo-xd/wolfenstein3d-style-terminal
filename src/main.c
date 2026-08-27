@@ -11,7 +11,6 @@
 #include "raycast.h"
 #include "map.h"
 
-
 static const double PLAYER_CAMERA_FOV = 0.66;
 static const double PLAYER_MOVE_SPEED = 0.20;
 static const double PLAYER_TURN_SPEED = 0.12;
@@ -67,69 +66,6 @@ void InitColors(void) {
   colorsEnabled = 1;
 }
 
-// dit opened en leest de file
-int ReadFile(const char *path, GameMap *map, World *world, Entity *playerEntity) {
-  FILE *file = fopen(path, "rb");
-  int foundPlayer = 0;
-  int enemyCount = 0;
-
-  if (!file) return 0;
-
-  EcsInit(world);
-  *playerEntity = ENTITY_NONE;
-
-  for (int y = 0; y < MAP_HEIGHT; y++) {
-    if (fscanf(file, "%16s", map->tiles[y]) != 1 || strlen(map->tiles[y]) != MAP_WIDTH) {
-      fclose(file);
-      return 0;
-    }
-
-    for (int x = 0; x < MAP_WIDTH; x++) {
-      if (map->tiles[y][x] == 'P') {
-        if (*playerEntity == ENTITY_NONE) {
-          *playerEntity = EcsCreate(
-            world,
-            COMPONENT_POSITION | COMPONENT_DIRECTION | COMPONENT_PLAYER
-          );
-          if (*playerEntity == ENTITY_NONE) {
-            fclose(file);
-            return 0;
-          }
-
-          world->direction[*playerEntity] = (Vec2){1.0, 0.0};
-          world->player[*playerEntity].ammo = COMBAT_STARTING_AMMO;
-        }
-
-        world->position[*playerEntity] = (Vec2){x + 0.5, y + 0.5};
-        map->tiles[y][x] = '.';
-        foundPlayer = 1;
-      } else if (map->tiles[y][x] == 'E') {
-        if (enemyCount >= MAP_MAX_ENEMIES) {
-          fclose(file);
-          return 0;
-        }
-
-        Entity enemy = EcsCreate(
-          world,
-          COMPONENT_POSITION | COMPONENT_HEALTH | COMPONENT_ENEMY
-        );
-        if (enemy == ENTITY_NONE) {
-          fclose(file);
-          return 0;
-        }
-
-        world->position[enemy] = (Vec2){x + 0.5, y + 0.5};
-        world->health[enemy] = COMBAT_ENEMY_STARTING_HEALTH;
-        enemyCount++;
-        map->tiles[y][x] = '.';
-      }
-    }
-  }
-
-  fclose(file);
-  return foundPlayer;
-}
-
 int CountEnemies(const World *world) {
   int alive = 0;
   const uint32_t required =
@@ -141,12 +77,7 @@ int CountEnemies(const World *world) {
   return alive;
 }
 
-
-
-
-void RenderEnemySystem(const World *world, Vec2 pos, Vec2 dir, Vec2 plane,
-                       int screenHeight, int screenWidth,
-                       const double *zBuffer) {
+void RenderEnemySystem(const World *world, Vec2 pos, Vec2 dir, Vec2 plane, int screenHeight, int screenWidth, const double *zBuffer) {
   double determinant = plane.x * dir.y - dir.x * plane.y;
   if (fabs(determinant) < 0.0001) return;
   double inverseDeterminant = 1.0 / determinant;
@@ -307,8 +238,8 @@ void MovementSystem(World *world, Entity playerEntity, const GameMap *map, doubl
   double nextX = pos->x + dir.x * amount;
   double nextY = pos->y + dir.y * amount;
 
-  if (!MapIsWall(map, nextX, pos->y)) pos->x = nextX;
-  if (!MapIsWall(map, pos->x, nextY)) pos->y = nextY;
+  if (!IsWall(map, nextX, pos->y)) pos->x = nextX;
+  if (!IsWall(map, pos->x, nextY)) pos->y = nextY;
 }
 
 // camera logic
@@ -330,7 +261,7 @@ int main(void) {
   World world;
   Entity playerEntity;
 
-  if (!ReadFile("src/assets/map.txt", &map, &world, &playerEntity)) {
+  if (!ReadMap("src/assets/map.txt", &map, &world, &playerEntity)) {
     fprintf(stderr, "Could not read map.txt or find P\n");
     return 1;
   }
