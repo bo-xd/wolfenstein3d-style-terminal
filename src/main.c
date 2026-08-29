@@ -10,10 +10,8 @@
 #include "weapon.h"
 #include "raycast.h"
 #include "map.h"
+#include "player.h"
 
-static const double PLAYER_CAMERA_FOV = 0.66;
-static const double PLAYER_MOVE_SPEED = 0.20;
-static const double PLAYER_TURN_SPEED = 0.12;
 static const double RENDER_MIN_WALL_DISTANCE = 0.001;
 static const double RENDER_WALL_SHADE_DISTANCE_SCALE = 1.5;
 static const double RENDER_FLOOR_DETAIL_START_RATIO = 0.75;
@@ -123,7 +121,6 @@ void RenderEnemySystem(const World *world, Vec2 pos, Vec2 dir, Vec2 plane, int s
   }
 }
 
-
 void RenderSystem(const World *world, Entity playerEntity, const GameMap *map) {
   if (!EcsHas(
         world,
@@ -146,7 +143,7 @@ void RenderSystem(const World *world, Entity playerEntity, const GameMap *map) {
 
   erase();
 
-  Vec2 plane = {-dir.y * PLAYER_CAMERA_FOV, dir.x * PLAYER_CAMERA_FOV};
+  Vec2 plane = {-dir.y * PLAYER_SETTINGS.cameraFov, dir.x * PLAYER_SETTINGS.cameraFov};
   double zBuffer[screenWidth];
 
   for (int x = 0; x < screenWidth; x++) {
@@ -225,37 +222,6 @@ void RenderSystem(const World *world, Entity playerEntity, const GameMap *map) {
   refresh();
 }
 
-// beweeg logic
-void MovementSystem(World *world, Entity playerEntity, const GameMap *map, double amount) {
-  if (!EcsHas(
-        world,
-        playerEntity,
-        COMPONENT_POSITION | COMPONENT_DIRECTION | COMPONENT_PLAYER
-      )) return;
-
-  Vec2 *pos = &world->position[playerEntity];
-  Vec2 dir = world->direction[playerEntity];
-  double nextX = pos->x + dir.x * amount;
-  double nextY = pos->y + dir.y * amount;
-
-  if (!IsWall(map, nextX, pos->y)) pos->x = nextX;
-  if (!IsWall(map, pos->x, nextY)) pos->y = nextY;
-}
-
-// camera logic
-void TurnSystem(World *world, Entity playerEntity, double angle) {
-  if (!EcsHas(
-        world,
-        playerEntity,
-        COMPONENT_DIRECTION | COMPONENT_PLAYER
-      )) return;
-
-  Vec2 *dir = &world->direction[playerEntity];
-  double oldX = dir->x;
-  dir->x = dir->x * cos(angle) - dir->y * sin(angle);
-  dir->y = oldX * sin(angle) + dir->y * cos(angle);
-}
-
 int main(void) {
   GameMap map;
   World world;
@@ -283,22 +249,22 @@ int main(void) {
       case 'w':
       case 'W':
       case KEY_UP:
-        MovementSystem(&world, playerEntity, &map, PLAYER_MOVE_SPEED);
+        MovementSystem(&world, playerEntity, &map, PLAYER_SETTINGS.moveSpeed);
         break;
       case 's':
       case 'S':
       case KEY_DOWN:
-        MovementSystem(&world, playerEntity, &map, -PLAYER_MOVE_SPEED);
+        MovementSystem(&world, playerEntity, &map, -PLAYER_SETTINGS.moveSpeed);
         break;
       case 'a':
       case 'A':
       case KEY_LEFT:
-        TurnSystem(&world, playerEntity, -PLAYER_TURN_SPEED);
+        TurnSystem(&world, playerEntity, -PLAYER_SETTINGS.turnSpeed);
         break;
       case 'd':
       case 'D':
       case KEY_RIGHT:
-        TurnSystem(&world, playerEntity, PLAYER_TURN_SPEED);
+        TurnSystem(&world, playerEntity, PLAYER_SETTINGS.turnSpeed);
         break;
       case ' ':
       case 'f':

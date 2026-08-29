@@ -18,6 +18,6 @@ fi
 
 compiler="${1:-gcc}"
 
-"$compiler" -std=c11 -Wall -Wextra -Wpedantic src/main.c src/combat.c src/ecs.c src/weapon.c src/raycast.c src/map.c -o main -lncursesw -lm
+"$compiler" -std=c11 -Wall -Wextra -Wpedantic src/main.c src/combat.c src/ecs.c src/weapon.c src/raycast.c src/map.c src/player.c -o main -lncursesw -lm
 
 ./main

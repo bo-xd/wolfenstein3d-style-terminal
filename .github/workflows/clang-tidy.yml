@@ -20,7 +20,7 @@ jobs:
       - name: Run clang-tidy
         run: >-
           clang-tidy
-          src/main.c src/combat.c src/ecs.c src/map.c src/raycast.c src/weapon.c
+          src/main.c src/combat.c src/ecs.c src/map.c src/raycast.c src/weapon.c src/player.c
           --checks='-*,clang-analyzer-*,-clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling'
           --warnings-as-errors='clang-analyzer-*'
           -- -std=c11 -Wall -Wextra -Wpedantic -Isrc
