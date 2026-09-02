@@ -1,129 +1,51 @@
-# Wolfenstein 3D-stijl terminalrenderer
+# Wolfenstein 3D-stijl terminalgame
 
-Een educatief raycasting-spel in C dat volledig in een terminal draait. Het project gebruikt `ncurses` voor invoer, kleur en uitvoer. De speler kan door een kaart bewegen, draaien en met een hitscan-wapen op vijanden schieten.
+Dit is mijn simpele 3D-shooter in de terminal. De game is gemaakt in C en gebruikt ncursesw voor het beeld en de toetsen.
 
-> Dit is een zelfstandig oefenproject en geen officieel Wolfenstein-product. Het project gebruikt geen originele broncode, afbeeldingen, geluiden of levels uit Wolfenstein.
+De game gebruikt geen echte 3D-modellen. Met raycasting en ASCII-tekens wordt een 3D-effect gemaakt.
 
-## Projectstatus
+> Dit is geen officieel Wolfenstein-spel. Ik gebruik geen originele code, levels, afbeeldingen of geluiden uit Wolfenstein.
 
-| Onderdeel | Waarde |
-|---|---|
-| Status | Werkend prototype |
-| Programmeertaal | C11 |
-| Interface | Terminal met ncurses |
-| Platform | Lokale Linux/POSIX-terminal |
-| Opslag | Tekstbestand voor de kaart |
-| Netwerk | Geen |
-| Database | Geen |
-| Ontwikkelvorm | Incrementeel |
+## Wat zit er in?
 
-## Doel en context
+- Een 3D-beeld met raycasting.
+- Lopen en draaien.
+- Muren waar je niet doorheen kunt lopen.
+- Vijanden waarop je kunt schieten.
+- Munitie, schade, score en een hitmarker.
+- Een ASCII-wapen met een simpele schietanimatie.
+- Een HUD met munitie, score en het aantal vijanden.
+- Kleuren en donkere muren op afstand.
+- Automatische tests in de map `tests/`.
 
-Het doel is om de basisprincipes achter vroege 3D-games te onderzoeken zonder een grafische engine te gebruiken. Het project laat zien hoe een tweedimensionale kaart met raycasting kan worden omgezet naar een perspectivisch beeld.
+## Wat heb je nodig?
 
-De belangrijkste leerdoelen zijn:
+- Linux of een andere POSIX-omgeving.
+- Een C-compiler, GCC of Clang.
+- De ontwikkelbibliotheek van ncursesw.
+- Een terminal van minimaal 20 bij 10 tekens.
 
-- C-syntax en -semantiek toepassen;
-- werken met structs, enums, arrays, pointers en functies;
-- een DDA-raycastingalgoritme implementeren;
-- terminalinvoer en -uitvoer verwerken met ncurses;
-- kaartgegevens omzetten naar runtime-objecten;
-- collision detection, projectie en hitscan-schieten toepassen;
-- code opdelen in bron- en headerbestanden;
-- iteratief ontwikkelen en wijzigingen beheren met Git.
-
-## Functionaliteit
-
-- Eerste-persoons raycastingweergave.
-- Afstandsschaduw met zestien grijstinten.
-- Alternatieve standaardkleuren wanneer de terminal geen aangepaste kleuren ondersteunt.
-- Collision detection tegen muren.
-- Vijanden die vanuit kaartgegevens worden geladen.
-- Projectie van vijanden met occlusion door muren.
-- Hitscan-schieten met munitie, schade, kills en score.
-- ASCII-wapen met recoil en muzzle flash.
-- HUD met munitie, score, aantal vijanden en spelerpositie.
-- Automatische aanpassing aan de terminalafmetingen.
-
-## Eisen en acceptatiecriteria
-
-### Functionele eisen
-
-| Eis | Acceptatiecriterium | Status |
-|---|---|---|
-| Kaart laden | Een geldige kaart bevat zestien regels van zestien tekens en ten minste één speler | Gerealiseerd |
-| Bewegen | De speler kan vooruit en achteruit zonder door muren te lopen | Gerealiseerd |
-| Draaien | De speler kan linksom en rechtsom draaien | Gerealiseerd |
-| 3D-weergave | Iedere terminalkolom wordt door één ray gerenderd | Gerealiseerd |
-| Schieten | Een schot verbruikt munitie en raakt alleen een vijand voor de speler | Gerealiseerd |
-| Occlusion | Een vijand achter een muur kan niet geraakt of zichtbaar gerenderd worden | Gerealiseerd |
-| Vijanden verslaan | Een vijand verdwijnt nadat diens gezondheid nul bereikt | Gerealiseerd |
-| Afsluiten | De applicatie sluit af met `Q` of `Esc` | Gerealiseerd |
-
-### Niet-functionele eisen
-
-| Eis | Uitwerking |
-|---|---|
-| Compileerbaarheid | C11 met `-Wall -Wextra -Wpedantic` |
-| Responsiviteit | De invoerlus gebruikt een timeout van 16 ms |
-| Leesbaarheid | Configuratie, gedeelde types en wapencode zijn gescheiden |
-| Compatibiliteit | Werkt met ncurses en heeft een kleurfallback |
-| Veilig bestandsgebruik | De mapinvoer heeft een maximale invoerlengte en vaste grenzen |
-| Offline gebruik | Geen account, internetverbinding of externe API nodig |
-
-## Benodigdheden
-
-- Een C11-compiler, bijvoorbeeld GCC of Clang.
-- De ontwikkelheaders en bibliotheek van `ncursesw`.
-- Een terminal met een minimale grootte van 20 kolommen bij 10 regels.
-- Bij voorkeur een terminal met 256-kleurenondersteuning.
-
-Voor Arch Linux zijn GCC en ncurses beschikbaar via:
+Op Arch Linux installeer je GCC, Clang en ncurses met:
 
 ```bash
-sudo pacman -S gcc ncurses
+sudo pacman -S gcc clang ncurses
 ```
 
-## Bouwen en starten
+## Starten
 
-Het buildscript compileert en start het programma:
+Ga in de hoofdmap van het project staan en voer dit uit:
 
 ```bash
 chmod +x build.sh
 ./build.sh
 ```
 
-Handmatig compileren kan met:
-
-```bash
-gcc -std=c11 -Wall -Wextra -Wpedantic src/main.c src/combat.c src/ecs.c src/map.c src/raycast.c src/weapon.c -o main -lncursesw -lm
-./main
-```
-
-Het programma verwacht dat `map.txt` vanuit de huidige werkmap beschikbaar is.
-
-Alle niet-lege tests uitvoeren met GCC of Clang:
-
-```bash
-./build.sh test
-./build.sh test clang
-```
-
-### Met Docker
-
-Docker compileert het programma in een aparte buildfase en maakt daarna een image met alleen het spel en de benodigde runtimebibliotheek:
-
-```bash
-docker build -t wolf-terminal .
-docker run --rm -it wolf-terminal
-```
-
-De opties `-it` zijn nodig omdat ncurses een interactieve terminal gebruikt.
+Het script bouwt de game en start hem daarna meteen.
 
 ## Besturing
 
-| Actie | Toetsen |
-|---|---|
+| Actie | Toets |
+| --- | --- |
 | Vooruit | `W` of pijltje omhoog |
 | Achteruit | `S` of pijltje omlaag |
 | Links draaien | `A` of pijltje links |
@@ -131,346 +53,89 @@ De opties `-it` zijn nodig omdat ncurses een interactieve terminal gebruikt.
 | Schieten | `Spatie` of `F` |
 | Afsluiten | `Q` of `Esc` |
 
-## Kaartformaat
+## Tests
 
-De kaart staat in `map.txt` en bestaat uit een raster van 16 bij 16 tekens.
+De automatische tests staan al in de map `tests/`. Ze testen:
+
+- munitie en de tijd tussen schoten;
+- raycasting;
+- botsingen met muren en de rand van de map;
+- geldige en ongeldige mapbestanden.
+
+Start alle tests met GCC:
+
+```bash
+./build.sh test
+```
+
+Testen met Clang kan ook als Clang is geïnstalleerd:
+
+```bash
+./build.sh test clang
+```
+
+GitHub Actions voert de tests automatisch uit met GCC en Clang. Er is ook een controle met `clang-tidy`.
+
+De game is handmatig getest in Ghostty op Linux en in Windows Terminal via Docker. Bij Windows Terminal draait de game in een Linux-container.
+
+## Docker
+
+Je kunt de game ook met Docker starten:
+
+```bash
+docker build -t wolf-terminal .
+docker run --rm -it wolf-terminal
+```
+
+## De map
+
+De map staat in `src/assets/map.txt` en is 16 bij 16 tekens groot.
 
 | Teken | Betekenis |
-|---|---|
+| --- | --- |
 | `#` | Muur |
 | `.` | Lege ruimte |
-| `P` | Startpositie van de speler |
-| `E` | Startpositie van een vijand |
+| `P` | Startplek van de speler |
+| `E` | Startplek van een vijand |
 
-Tijdens het laden worden `P` en `E` omgezet naar ECS-entiteiten met bijbehorende componenten. De tekens worden daarna vervangen door lege ruimte. De kaart zelf blijft een raster en is geen verzameling entiteiten.
+De buitenkant van de map moet helemaal uit muren bestaan. Er moet precies één speler in de map staan.
 
-Een onleesbaar bestand, een regel met een verkeerde lengte, te veel vijanden of een ontbrekende speler zorgt ervoor dat het programma niet start.
+## Belangrijkste bestanden
 
-## Projectstructuur
+- `src/main.c`: start de game en tekent het beeld.
+- `src/player.c`: regelt lopen en draaien.
+- `src/map.c`: laadt de map en controleert muren.
+- `src/raycast.c`: maakt het 3D-effect.
+- `src/ecs.c`: bewaart de speler en vijanden.
+- `src/combat.c`: regelt schieten, schade en punten.
+- `src/weapon.c`: tekent het wapen.
+- `src/assets/map.txt`: bevat het level.
+- `tests/`: bevat de automatische tests.
+- `docs/GDD.md`: bevat het korte ontwerp van de game.
+- `docs/wat-ontbreekt.md`: bevat de taken die nog gedaan kunnen worden.
 
-```text
-.
-├── build.sh          # Compileren en starten
-├── combat.c          # Munitie, hits, score en combat-timers
-├── combat.h          # Publieke combat-interface
-├── ecs.c             # Entity lifecycle en componentqueries
-├── ecs.h             # ECS-world, componenten en publieke interface
-├── game_config.h     # Benoemde instellingen en kleur-ID's
-├── game_types.h      # Gedeelde structs en enums
-├── main.c            # Laden, rendering, invoer en game loop
-├── map.c             # Collisioncontrole voor de kaart
-├── map.h             # GameMap-type en publieke mapinterface
-├── map.txt           # Kaartgegevens
-├── raycast.c         # DDA-raycasting
-├── raycast.h         # Publieke raycastinginterface
-├── weapon.c          # ASCII-wapen en animatie
-└── weapon.h          # Publieke weapon-functie
-```
+## Wat zit er nog niet in?
 
-### Verantwoordelijkheden
+- Er is maar één level.
+- Vijanden lopen niet en schieten niet terug.
+- Er zijn geen deuren of voorwerpen om op te pakken.
+- Er is geen geluid of muziek.
+- Er is geen win- of verliesscherm.
+- Je kunt de toetsen en kleuren niet aanpassen.
 
-- `combat.c` beheert munitie, cooldowns, hits, kills en score.
-- `combat.h` beschrijft de publieke combat-interface.
-- `ecs.c` beheert het maken, opvragen en vernietigen van entiteiten.
-- `ecs.h` definieert de ECS-world en componentopslag voor maximaal 128 entiteiten.
-- `main.c` beheert de applicatie, ncurses, kaartladen, rendering en invoer.
-- `map.c` beheert collisioncontrole op een `GameMap`.
-- `raycast.c` berekent muurafstanden en geraakte zijden met DDA.
-- `game_config.h` groepeert instellingen per onderwerp: map, combat, renderer en kleuren.
-- `game_types.h` bevat gedeelde datatypes zoals `Vec2`, `RayHit` en `ShotResult`.
-- `weapon.c` bevat uitsluitend de presentatie en animatie van het wapen.
-- `map.txt` bevat gegevens en geen programmalogica.
+## Waarom C en ncursesw?
 
-## Architectuurdiagram
+Met C kan ik zelf de berekeningen, game-loop en opslag van gegevens maken. ncursesw regelt de invoer, kleuren en tekst in de terminal. De docent heeft toestemming gegeven om deze game zonder bestaande game-engine te maken.
 
-```mermaid
-flowchart TD
-    Input[Toetsenbord] --> Loop[Game loop]
-    Map[map.txt] --> Loader[Map loader]
-    Loader --> MapWorld[Kaart]
-    Loader --> ECS[ECS-world en componenten]
-    Loop --> Movement[Beweging en collision]
-    Loop --> Shooting[Hitscan shooting]
-    Loop --> Raycaster[Raycaster]
-    Loop --> Renderer[ncurses renderer]
-    ECS --> Movement
-    ECS --> Shooting
-    ECS --> Renderer
-    MapWorld --> Movement
-    MapWorld --> Shooting
-    MapWorld --> Raycaster
-    Raycaster --> Renderer
-    Shooting --> Renderer
-    Weapon[weapon.c] --> Renderer
-    Renderer --> Terminal[Terminal]
-```
+Voor het schrijven van de code heb ik Neovim gebruikt met LazyVim. LazyVim is een kant-en-klare configuratie voor Neovim met plugins en instellingen. Ik gebruik GCC en Clang om de code te compileren en te testen.
 
-## Sequentiediagram van een schot
+## Documentatie
 
-```mermaid
-sequenceDiagram
-    actor Speler
-    participant Loop as Game loop
-    participant Shoot as Shoot
-    participant Ray as CastRay
-    participant ECS as ECS-world
-    participant Render as Renderer
+- [Game Design Document](docs/GDD.md)
+- [Testverslag](docs/testverslag.md)
+- [Handleiding om de game te starten](docs/handleiding.md)
+- [Wat ontbreekt er nog?](docs/wat-ontbreekt.md)
 
-    Speler->>Loop: Spatie of F
-    Loop->>Shoot: CombatSystem(world, playerEntity)
-    Shoot->>Shoot: Controleer cooldown en munitie
-    Shoot->>Ray: Zoek afstand tot eerste muur
-    Ray-->>Shoot: RayHit
-    Shoot->>ECS: Query position, health en enemy
-    ECS-->>Shoot: Kandidaat-vijanden
-    Shoot->>ECS: Schade, destroy en spelerstatus bijwerken
-    Shoot-->>Loop: Systeem klaar
-    Loop->>Render: Render ECS-world
-```
+## Licentie
 
-Een ERD is niet van toepassing omdat de ECS-entiteiten alleen tijdens het spel bestaan en er geen relationele database is.
-
-## Belangrijke ontwerpkeuzes
-
-### C en procedurele opbouw
-
-Het project gebruikt C11 en een procedurele architectuur. Structs groeperen gegevens, headers beschrijven gedeelde interfaces en bronbestanden scheiden verantwoordelijkheden.
-
-Dit project is geen volledige demonstratie van objectgeoriënteerd programmeren. Encapsulation en modularity worden gedeeltelijk toegepast via modules en interne data. Inheritance en polymorphism worden niet toegepast, omdat die niet natuurlijk bij deze kleine C-codebase passen.
-
-### Entity Component System
-
-De speler en vijanden zijn numerieke entity-ID's. Een bitmasker beschrijft welke componenten ieder entity-ID bezit. Positie, richting, gezondheid en spelerstatus worden in afzonderlijke vaste arrays opgeslagen. Systemen selecteren entiteiten op basis van de benodigde componenten.
-
-Het ECS gebruikt geen dynamische allocatie. Een vernietigde vijand krijgt een leeg componentmasker en wordt daardoor niet langer door combat, rendering of de HUD gevonden. De tegelkaart blijft buiten het ECS omdat collision detection en raycasting het raster rechtstreeks gebruiken.
-
-### Raycasting
-
-De renderer gebruikt DDA-raycasting. Voor iedere kolom wordt bepaald welke muur als eerste geraakt wordt. De afstand bepaalt vervolgens de geprojecteerde hoogte en kleur van de muur.
-
-Dezelfde `CastRay`-functie wordt gebruikt voor rendering en voor controle of een vijand achter een muur staat. Hierdoor staat het algoritme niet dubbel in de code.
-
-### Hitscan in plaats van projectielen
-
-Schoten worden onmiddellijk berekend. Er bestaan geen rondvliegende kogels. Deze keuze past bij vroege first-person shooters en houdt de game loop klein.
-
-### Vaste kaartgrootte
-
-Een vaste kaart van 16 bij 16 maakt validatie en geheugenbeheer eenvoudig. Het nadeel is dat grotere of dynamische levels nog niet worden ondersteund.
-
-### Geen cloud of netwerk
-
-Dit is een native terminalapplicatie. SaaS, PaaS en IaaS leveren voor deze lokale singleplayergame geen functionele meerwaarde. Een cloudomgeving zou wel kunnen worden gebruikt voor CI-builds, releases of distributie, maar niet voor de runtime van het spel.
-
-## Ontwikkelmethodiek
-
-Het project wordt incrementeel ontwikkeld. Een werkende basis blijft bruikbaar terwijl functies in kleine stappen worden toegevoegd.
-
-De globale ontwikkelvolgorde is:
-
-1. Kaart laden en spelerpositie bepalen.
-2. DDA-raycasting en terminalweergave maken.
-3. Beweging en collision detection toevoegen.
-4. Afstandsschaduw en terminalkleuren toevoegen.
-5. Code opdelen in configuratie, types en wapencode.
-6. Vijanden, hitscan-schieten, score en munitie toevoegen.
-7. Presentatie, foutafhandeling en documentatie verbeteren.
-
-Voor toekomstige iteraties kunnen taken als GitHub Issues worden vastgelegd met een acceptatiecriterium en een duidelijke definitie van gereed.
-
-## Versiebeheer
-
-Het project gebruikt Git en heeft een GitHub-remote. Een geschikte workflow is:
-
-1. Maak een issue of kleine taak met een duidelijk resultaat.
-2. Maak eventueel een featurebranch.
-3. Houd commits klein en geef iedere commit een beschrijvende boodschap.
-4. Compileer en test vóór het committen.
-5. Gebruik een pull request wanneer een tweede persoon een wijziging kan beoordelen.
-6. Gebruik tags voor stabiele versies.
-
-Buildproducten zoals het uitvoerbare bestand `main` horen niet in Git en staan daarom in `.gitignore`.
-
-## Gebruikte ontwikkeltools
-
-- GCC voor compilatie.
-- ncursesw voor terminalinvoer, kleuren en rendering.
-- Git voor lokaal versiebeheer.
-- GitHub voor opslag en samenwerking.
-- Shellscript voor een herhaalbare lokale build.
-- AI als hulpmiddel bij brainstormen, uitleg, documentatie en refactoring.
-
-### Verantwoord gebruik van AI
-
-AI-uitvoer wordt niet automatisch als correct beschouwd. Gegenereerde voorstellen moeten handmatig worden gelezen, aangepast, gecompileerd en getest. De ontwikkelaar blijft verantwoordelijk voor de werking, veiligheid, auteursrechten en begrijpelijkheid van de ingeleverde code.
-
-Er worden geen wachtwoorden, persoonsgegevens, tokens of andere vertrouwelijke gegevens in AI-prompts geplaatst. Bij een opleiding of organisatie moet daarnaast het geldende AI-beleid worden gevolgd.
-
-## Teststrategie
-
-### Huidige situatie
-
-Het project heeft geautomatiseerde C-tests en GitHub Actions-workflows. Bij iedere push en pull request draaien de tests met GCC en Clang en controleert een aparte workflow de broncode met `clang-tidy`.
-
-### Handmatige controles
-
-- Het programma start met een geldige kaart.
-- Een ontbrekende of ongeldige kaart wordt geweigerd.
-- De speler loopt niet door muren.
-- Draaien werkt in beide richtingen.
-- De renderer blijft werken na het vergroten of verkleinen van de terminal.
-- Een schot verlaagt de hoeveelheid munitie.
-- Een muur blokkeert een schot.
-- Een vijand ontvangt schade en kan worden uitgeschakeld.
-- Score en het aantal levende vijanden worden bijgewerkt.
-- De applicatie herstelt de terminal na afsluiten.
-
-### Aanbevolen automatische tests
-
-- Mapvalidatie en conversie van `P` en `E`.
-- Collision detection aan iedere kaartrand.
-- Afstanden en zijden die `CastRay` teruggeeft.
-- Hits, misses, wall occlusion en kills.
-- Gedrag bij nul munitie.
-- Mapvalidatie met een geldige map, ontbrekende speler, verkeerde breedte en ontbrekend bestand.
-- Bouwen en testen met GCC en Clang.
-- Static analysis met `clang-tidy`.
-
-AddressSanitizer en UndefinedBehaviorSanitizer zijn nog niet aan de CI-pipeline toegevoegd.
-
-## Security en SSDLC
-
-De applicatie heeft een klein aanvalsoppervlak: zij verwerkt alleen lokale toetsenbordinvoer en één lokaal tekstbestand. Zij opent geen netwerkverbinding, voert geen ingevoerde commando’s uit en verwerkt geen accounts.
-
-Toegepaste maatregelen:
-
-- mapregels worden begrensd ingelezen;
-- kaartafmetingen worden gecontroleerd;
-- het maximale aantal vijanden wordt gecontroleerd;
-- kaarttoegang wordt begrensd;
-- het programma draait zonder verhoogde rechten;
-- compilerwaarschuwingen staan aan;
-- er worden geen secrets in de repository verwacht.
-
-Resterende verbeteringen:
-
-- geautomatiseerde tests toevoegen;
-- sanitizers en static analysis gebruiken;
-- fouten van alle ncurses-functies controleren;
-- dependencyversies en kwetsbaarheden periodiek controleren;
-- fuzztests voor het kaartformaat toevoegen.
-
-OWASP-richtlijnen voor webapplicaties zijn grotendeels niet van toepassing omdat dit geen webapplicatie is. De algemene SSDLC-principes blijven wel relevant: requirements vastleggen, invoer valideren, dependencies beheren, testen, reviewen en kwetsbaarheden opvolgen.
-
-## Privacy
-
-Het programma verwerkt geen persoonsgegevens en gebruikt geen:
-
-- gebruikersaccounts;
-- cookies;
-- analytics of telemetry;
-- netwerkverkeer;
-- locatiegegevens;
-- cloudopslag.
-
-De spelerpositie, score en munitie bestaan alleen in het werkgeheugen en worden bij afsluiten niet opgeslagen. Daardoor is een privacyverklaring voor eindgebruikers momenteel niet noodzakelijk. Wanneer later telemetry, online scores of accounts worden toegevoegd, moet vóór implementatie opnieuw een privacyanalyse worden uitgevoerd.
-
-## Toegankelijkheid
-
-Positieve eigenschappen:
-
-- de game is volledig met het toetsenbord te bedienen;
-- zowel WASD als pijltjestoetsen worden ondersteund;
-- gameplay blijft mogelijk wanneer aangepaste kleuren niet beschikbaar zijn;
-- informatie wordt naast kleur ook met verschillende tekens weergegeven;
-- de renderer controleert een minimale terminalgrootte.
-
-Bekende beperkingen:
-
-- bediening is nog niet configureerbaar;
-- contrast verschilt per terminalthema;
-- snelle beeldveranderingen kunnen oncomfortabel zijn;
-- de ruimtelijke ASCII-weergave is waarschijnlijk niet bruikbaar met een screenreader;
-- er is geen instelling voor motion reduction of een alternatief kleurenschema.
-
-## Auteursrecht, naamgebruik en licenties
-
-Wolfenstein en Wolfenstein 3D zijn namen die verbonden zijn aan hun respectieve rechthebbenden. Dit project is niet aan hen verbonden en gebruikt de naam alleen om het type raycastingweergave te beschrijven.
-
-De code, kaart en ASCII-weergave in deze repository zijn voor dit oefenproject gemaakt. Er worden geen originele Wolfenstein-assets meegeleverd.
-
-`ncurses` is een externe dependency en valt onder de eigen licentievoorwaarden van dat project.
-
-De projectcode valt onder de GNU General Public License v3.0 in het bestand `LICENSE`. Externe dependencies, waaronder ncurses, behouden hun eigen licentievoorwaarden.
-
-## Risicoanalyse
-
-| Risico | Kans | Impact | Maatregel |
-|---|---|---|---|
-| Ongeldige kaartdata | Middel | Middel | Lengte, speler en vijandlimiet controleren |
-| Terminal ondersteunt kleuren niet | Middel | Laag | Standaardkleuren en tekenverschillen gebruiken |
-| Terminal is te klein | Middel | Laag | Minimale afmetingen controleren |
-| Out-of-bounds toegang | Laag | Hoog | Grenzen controleren en sanitizers toevoegen |
-| Regressie na nieuwe features | Middel | Middel | Kleine commits en automatische tests toevoegen |
-| Afwijkend gedrag tussen terminals | Middel | Middel | Op meerdere terminals en met GCC/Clang testen |
-| Kwetsbaarheid in dependency | Laag | Middel | ncurses via betrouwbare pakketbron bijwerken |
-| Inbreuk op rechten of merkverwarring | Laag | Middel | Geen originele assets gebruiken en disclaimer tonen |
-| AI genereert foutieve code | Middel | Middel | Handmatig reviewen, compileren en testen |
-
-## Verantwoordelijkheid en zelfstandigheid
-
-In de huidige projectvorm voert de ontwikkelaar de technische deeltaken zelfstandig uit: requirements vertalen, ontwerpen, programmeren, compileren, testen, documenteren en versiebeheer toepassen.
-
-Bij samenwerking kunnen verantwoordelijkheden worden verdeeld over bijvoorbeeld rendering, gameplay, tests en documentatie. De eigenaar van een wijziging blijft verantwoordelijk voor een werkende build en duidelijke overdracht. Feedback van docenten, opdrachtgevers of teamleden hoort te worden vastgelegd en omgezet naar concrete taken.
-
-Een apart projectlogboek kan bewijs leveren voor planning, ontvangen feedback, gemaakte keuzes, problemen, tijdsinschattingen en persoonlijke reflectie. Die informatie kan niet betrouwbaar uit alleen de broncode worden afgeleid.
-
-## Complexiteit en reflectie
-
-De technische complexiteit zit vooral in:
-
-- het omzetten van een 2D-kaart naar een perspectivisch beeld;
-- vector- en projectieberekeningen;
-- voorkomen van fisheye-vervorming en delen door nul;
-- combineren van rendering, invoer en timing in één terminal-loop;
-- omgaan met verschillende terminalgroottes en kleurmogelijkheden;
-- occlusion van enemies en schoten door muren;
-- balans tussen eenvoudige code en voldoende visueel detail.
-
-De terminal is tegelijk de belangrijkste beperking en het centrale ontwerpdoel. Tekens zijn geen vierkante pixels, kleuren verschillen per terminal en de applicatie heeft geen directe controle over lettergrootte. Keuzes moeten daarom telkens worden afgewogen tegen portabiliteit, leesbaarheid en complexiteit.
-
-Tijdsdruk, samenwerking en workload zijn op dit moment niet meetbaar vastgelegd. Wanneer dit project voor beoordeling wordt gebruikt, moeten planning en urenregistratie apart en feitelijk worden bijgehouden in plaats van achteraf te worden verzonnen.
-
-## Bekende beperkingen
-
-- Alleen kaarten van 16 bij 16 worden ondersteund.
-- Enemies bewegen niet en hebben geen AI.
-- Er zijn geen pickups, deuren, geluiden of meerdere levels.
-- Munitie kan niet worden aangevuld.
-- Er is geen savegame.
-- Hits, misses, wall occlusion, damage en kills worden nog niet automatisch getest.
-- Sanitizers draaien nog niet in de CI-pipeline.
-- De werking op Windows is niet onderzocht.
-- Instellingen en toetsen zijn niet configureerbaar.
-- De game gebruikt globale state en is niet ontworpen als herbruikbare engine.
-
-## Mogelijke vervolgstappen
-
-1. Combatgevallen zoals hits, misses, occlusion, damage en kills testen.
-2. AddressSanitizer en UndefinedBehaviorSanitizer aan CI toevoegen.
-3. Enemies laten bewegen met eenvoudige AI.
-4. Deuren, pickups en meerdere levels toevoegen.
-5. Besturing en kleuren configureerbaar maken.
-6. Een releaseproces met versienummers en changelog invoeren.
-
-## Definition of Done
-
-Een toekomstige taak is gereed wanneer:
-
-- de afgesproken acceptatiecriteria zijn behaald;
-- de code zonder waarschuwingen compileert;
-- bestaande functionaliteit nog werkt;
-- relevante tests zijn uitgevoerd of toegevoegd;
-- documentatie is bijgewerkt;
-- geen secrets of buildbestanden zijn toegevoegd;
-- de wijziging een duidelijke Git-commit heeft.
+De code valt onder de GNU General Public License v3. Zie het bestand `LICENSE`.
