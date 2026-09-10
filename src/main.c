@@ -1,10 +1,10 @@
-#include <math.h>
 #include <ncurses.h>
 #include <stdio.h>
 #include <string.h>
 
 #include "combat.h"
 #include "ecs.h"
+#include "enemy.h"
 #include "game_config.h"
 #include "game_types.h"
 #include "weapon.h"
@@ -17,7 +17,20 @@ static const double RENDER_WALL_SHADE_DISTANCE_SCALE = 1.5;
 static const double RENDER_FLOOR_DETAIL_START_RATIO = 0.75;
 static const double RENDER_CEILING_DETAIL_START_RATIO = 0.20;
 
+typedef enum GameState {
+  GAME_PLAYING,
+  GAME_VICTORY
+} GameState;
+
 int colorsEnabled = 0;
+
+static const char *const VICTORY_BANNER[] = {
+  "V   V IIIII  CCC  TTTTT  OOO  RRRR  Y   Y",
+  "V   V   I   C       T   O   O R   R  Y Y ",
+  "V   V   I   C       T   O   O RRRR    Y  ",
+  " V V    I   C       T   O   O R R     Y  ",
+  "  V   IIIII  CCC    T    OOO  R  RR   Y  "
+};
 
 void InitColors(void) {
   if (!has_colors() || start_color() == ERR) return;
@@ -64,61 +77,46 @@ void InitColors(void) {
   colorsEnabled = 1;
 }
 
-int CountEnemies(const World *world) {
-  int alive = 0;
-  const uint32_t required =
-    COMPONENT_POSITION | COMPONENT_HEALTH | COMPONENT_ENEMY;
+static void RenderVictorySystem(int frame) {
+  int screenHeight;
+  int screenWidth;
+  getmaxyx(stdscr, screenHeight, screenWidth);
+  erase();
 
-  for (Entity entity = 0; entity < ECS_MAX_ENTITIES; entity++) {
-    if (EcsHas(world, entity, required)) alive++;
+  int lineCount = (int)(sizeof(VICTORY_BANNER) / sizeof(VICTORY_BANNER[0]));
+  int bannerWidth = 0;
+  for (int line = 0; line < lineCount; line++) {
+    int width = (int)strlen(VICTORY_BANNER[line]);
+    if (width > bannerWidth) bannerWidth = width;
   }
-  return alive;
-}
 
-void RenderEnemySystem(const World *world, Vec2 pos, Vec2 dir, Vec2 plane, int screenHeight, int screenWidth, const double *zBuffer) {
-  double determinant = plane.x * dir.y - dir.x * plane.y;
-  if (fabs(determinant) < 0.0001) return;
-  double inverseDeterminant = 1.0 / determinant;
-  const uint32_t required =
-    COMPONENT_POSITION | COMPONENT_HEALTH | COMPONENT_ENEMY;
+  int fullBanner = screenWidth >= bannerWidth;
+  int bannerHeight = fullBanner ? lineCount : 1;
+  int targetY = (screenHeight - bannerHeight) / 2;
+  if (targetY < 0) targetY = 0;
+  int bannerY = frame / RENDER_VICTORY_FRAMES_PER_ROW - bannerHeight;
+  if (bannerY > targetY) bannerY = targetY;
 
-  for (Entity entity = 0; entity < ECS_MAX_ENTITIES; entity++) {
-    if (!EcsHas(world, entity, required)) continue;
-
-    double relativeX = world->position[entity].x - pos.x;
-    double relativeY = world->position[entity].y - pos.y;
-    double transformX = inverseDeterminant * (dir.y * relativeX - dir.x * relativeY);
-    double transformY = inverseDeterminant * (-plane.y * relativeX + plane.x * relativeY);
-
-    if (transformY <= 0.1) continue;
-
-    int spriteHeight = (int)fabs(screenHeight / transformY);
-    int spriteWidth = spriteHeight / 2;
-    if (spriteWidth < 1) spriteWidth = 1;
-
-    int screenX = (int)((screenWidth / 2.0) * (1.0 + transformX / transformY));
-    int top = screenHeight / 2 - spriteHeight / 2;
-    int bottom = screenHeight / 2 + spriteHeight / 2;
-    int left = screenX - spriteWidth / 2;
-    int right = screenX + spriteWidth / 2;
-
-    if (top < 0) top = 0;
-    if (bottom >= screenHeight) bottom = screenHeight - 1;
-
-    for (int x = left; x <= right; x++) {
-      if (x < 0 || x >= screenWidth || transformY >= zBuffer[x]) continue;
-
-      double u = (x - left + 0.5) / (right - left + 1);
-      for (int y = top; y <= bottom; y++) {
-        double v = (y - top + 0.5) / (bottom - top + 1);
-        if ((v < 0.25 && fabs(u - 0.5) > 0.25) ||
-            (v > 0.75 && fabs(u - 0.5) < 0.15)) continue;
-        char pixel = v < 0.25 ? 'O' : v < 0.75 ? '#' : '|';
-        chtype style = colorsEnabled ? COLOR_PAIR(PAIR_ENEMY) : A_BOLD;
-        mvaddch(y, x, pixel | style | A_BOLD);
-      }
-    }
+  chtype style = A_BOLD;
+  if (colorsEnabled) style |= COLOR_PAIR(PAIR_WEAPON_FLASH);
+  attron(style);
+  for (int line = 0; line < bannerHeight; line++) {
+    const char *text = fullBanner ? VICTORY_BANNER[line] : "*** VICTORY ***";
+    int row = bannerY + line;
+    int column = (screenWidth - (int)strlen(text)) / 2;
+    if (column < 0) column = 0;
+    if (row >= 0 && row < screenHeight) mvaddnstr(row, column, text, screenWidth - column);
   }
+  attroff(style);
+
+  if (bannerY == targetY) {
+    const char *message = "ALL ENEMIES DEFEATED - PRESS Q OR ESC TO QUIT";
+    int row = targetY + bannerHeight + 2;
+    int column = (screenWidth - (int)strlen(message)) / 2;
+    if (column < 0) column = 0;
+    if (row < screenHeight) mvaddnstr(row, column, message, screenWidth - column);
+  }
+  refresh();
 }
 
 void RenderSystem(const World *world, Entity playerEntity, const GameMap *map) {
@@ -197,7 +195,7 @@ void RenderSystem(const World *world, Entity playerEntity, const GameMap *map) {
   }
 
   RenderEnemySystem(
-    world, pos, dir, plane, screenHeight, screenWidth, zBuffer
+    world, pos, dir, plane, screenHeight, screenWidth, zBuffer, colorsEnabled
   );
 
   chtype markerStyle = colorsEnabled ? COLOR_PAIR(PAIR_WEAPON_FLASH) : A_BOLD;
@@ -241,9 +239,16 @@ int main(void) {
   curs_set(0);
   timeout(RENDER_INPUT_TIMEOUT_MS);
 
-  int running = 1;
-  while (running) {
+  int victoryFrame = 0;
+  GameState gameState = GAME_PLAYING;
+  while (1) {
     int key = getch();
+
+    if (key == 'q' || key == 'Q' || key == 27) break;
+    if (gameState == GAME_VICTORY) {
+      RenderVictorySystem(victoryFrame++);
+      continue;
+    }
 
     switch (key) {
       case 'w':
@@ -271,15 +276,16 @@ int main(void) {
       case 'F':
         CombatSystem(&world, playerEntity, &map);
         break;
-      case 'q':
-      case 'Q':
-      case 27:
-        running = 0;
-        break;
     }
 
-    RenderSystem(&world, playerEntity, &map);
-    CombatTimerSystem(&world);
+    EnemyMovementSystem(&world, playerEntity, &map);
+    if (CountEnemies(&world) == 0) {
+      gameState = GAME_VICTORY;
+      RenderVictorySystem(victoryFrame++);
+    } else {
+      RenderSystem(&world, playerEntity, &map);
+      CombatTimerSystem(&world);
+    }
   }
 
   endwin();

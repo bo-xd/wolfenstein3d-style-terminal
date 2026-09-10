@@ -12,9 +12,11 @@ De game gebruikt geen echte 3D-modellen. Met raycasting en ASCII-tekens wordt ee
 - Lopen en draaien.
 - Muren waar je niet doorheen kunt lopen.
 - Vijanden waarop je kunt schieten.
+- Vijanden die via een eenvoudige kortste route naar je toe lopen.
 - Munitie, schade, score en een hitmarker.
 - Een ASCII-wapen met een simpele schietanimatie.
 - Een HUD met munitie, score en het aantal vijanden.
+- Een overwinningsscherm met een vallende ASCII-animatie.
 - Kleuren en donkere muren op afstand.
 - Automatische tests in de map `tests/`.
 
@@ -60,6 +62,7 @@ De automatische tests staan al in de map `tests/`. Ze testen:
 - munitie en de tijd tussen schoten;
 - raycasting;
 - botsingen met muren en de rand van de map;
+- routes van vijanden rond muren;
 - geldige en ongeldige mapbestanden.
 
 Start alle tests met GCC:
@@ -107,6 +110,7 @@ De buitenkant van de map moet helemaal uit muren bestaan. Er moet precies één 
 - `src/map.c`: laadt de map en controleert muren.
 - `src/raycast.c`: maakt het 3D-effect.
 - `src/ecs.c`: bewaart de speler en vijanden.
+- `src/enemy.c`: telt, beweegt en tekent de vijanden.
 - `src/combat.c`: regelt schieten, schade en punten.
 - `src/weapon.c`: tekent het wapen.
 - `src/assets/map.txt`: bevat het level.
@@ -117,10 +121,10 @@ De buitenkant van de map moet helemaal uit muren bestaan. Er moet precies één 
 ## Wat zit er nog niet in?
 
 - Er is maar één level.
-- Vijanden lopen niet en schieten niet terug.
+- Vijanden schieten niet terug.
 - Er zijn geen deuren of voorwerpen om op te pakken.
 - Er is geen geluid of muziek.
-- Er is geen win- of verliesscherm.
+- Er is geen verliesscherm.
 - Je kunt de toetsen en kleuren niet aanpassen.
 
 ## Waarom C en ncursesw?

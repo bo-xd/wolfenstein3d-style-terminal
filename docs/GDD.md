@@ -10,9 +10,9 @@ De game is vooral bedoeld voor mensen die van oude games houden of willen zien h
 
 ## Hoe de game werkt
 
-De speler kan lopen, draaien en schieten. Je begint met 48 kogels. Een vijand is dood na twee keer raken. Voor elke verslagen vijand krijg je 100 punten.
+De speler kan lopen, draaien en schieten. Je begint met 48 kogels. Een vijand is dood na twee keer raken. Voor elke verslagen vijand krijg je 100 punten. Vijanden zoeken via de vrije vakken van de map een korte route naar de speler.
 
-Muren houden de speler tegen. Je kunt ook niet door een muur heen schieten. De game heeft nog geen echt eindscherm. Als alle vijanden weg zijn, kun je de game zelf afsluiten.
+Muren houden de speler en vijanden tegen. Je kunt ook niet door een muur heen schieten. Als alle vijanden weg zijn, verschijnt het overwinningsscherm.
 
 ## Besturing
 
@@ -40,6 +40,7 @@ De code is verdeeld over meerdere bestanden:
 - `map.c` laadt de map en houdt de speler tegen bij muren.
 - `raycast.c` berekent welke muren je ziet.
 - `ecs.c` bewaart de speler en vijanden.
+- `enemy.c` berekent routes en regelt beweging en rendering van vijanden.
 - `combat.c` regelt schieten, schade en punten.
 - `weapon.c` tekent het wapen.
 
@@ -58,8 +59,8 @@ Ik moet de game ook zelf testen. Ik controleer dan het lopen, draaien, schieten,
 ## Wat er nog niet in zit
 
 - Er is maar één level.
-- Vijanden lopen niet rond en schieten niet terug.
+- Vijanden schieten niet terug.
 - Er zijn geen deuren of voorwerpen om op te pakken.
 - Er is geen geluid.
-- Er is geen win- of verliesscherm.
+- Er is geen verliesscherm.
 - Je kunt de toetsen en kleuren niet aanpassen.
