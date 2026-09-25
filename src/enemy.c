@@ -8,6 +8,7 @@ static const double ENEMY_MOVE_SPEED = 0.015;
 static const double ENEMY_STOP_DISTANCE = 0.75;
 static const int NEIGHBOR_OFFSETS[4][2] = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
 
+// BFS pathfinding https://nl.wikipedia.org/wiki/Breadth-first_search
 static void BuildPathDistances(const GameMap *map, int goalX, int goalY, int distance[MAP_HEIGHT][MAP_WIDTH]) {
   int queueX[MAP_WIDTH * MAP_HEIGHT];
   int queueY[MAP_WIDTH * MAP_HEIGHT];

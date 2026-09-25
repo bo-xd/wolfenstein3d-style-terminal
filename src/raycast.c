@@ -5,8 +5,8 @@
 RayHit CastRay(const GameMap *map, Vec2 pos, Vec2 rayDir) {
   int mapX = (int)pos.x;
   int mapY = (int)pos.y;
-  double deltaX = rayDir.x == 0.0 ? INFINITY : fabs(1.0 / rayDir.x);
-  double deltaY = rayDir.y == 0.0 ? INFINITY : fabs(1.0 / rayDir.y);
+  double deltaX = rayDir.x == 0.0 ? HUGE_VAL : fabs(1.0 / rayDir.x);
+  double deltaY = rayDir.y == 0.0 ? HUGE_VAL : fabs(1.0 / rayDir.y);
   int stepX = rayDir.x < 0.0 ? -1 : 1;
   int stepY = rayDir.y < 0.0 ? -1 : 1;
   double sideX = rayDir.x < 0.0
@@ -17,6 +17,7 @@ RayHit CastRay(const GameMap *map, Vec2 pos, Vec2 rayDir) {
     : (mapY + 1.0 - pos.y) * deltaY;
   RaySide side = RAY_SIDE_X;
 
+  // Prevent warning (;;) loop
   for (;;) {
     if (sideX < sideY) {
       sideX += deltaX;
