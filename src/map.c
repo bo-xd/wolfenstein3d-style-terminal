@@ -4,63 +4,153 @@
 #include "map.h"
 
 int IsWall(const GameMap *map, double x, double y) {
-  if (x < 0 || x >= MAP_WIDTH || y < 0 || y >= MAP_HEIGHT) return 1;
+  if (x < 0 || x >= MapWidth || y < 0 || y >= MapHeight) {
+    return 1;
+  }
   return map->tiles[(int)y][(int)x] == '#';
 }
 
 static int HasClosedBorders(const GameMap *map) {
-  for (int x = 0; x < MAP_WIDTH; x++) {
-    if (!IsWall(map, x, 0) || !IsWall(map, x, MAP_HEIGHT - 1)) return 0;
+  for (int x = 0; x < MapWidth; x++) {
+    if (!IsWall(map, x, 0) || !IsWall(map, x, MapHeight - 1)) {
+      return 0;
+    }
   }
-  for (int y = 0; y < MAP_HEIGHT; y++) {
-    if (!IsWall(map, 0, y) || !IsWall(map, MAP_WIDTH - 1, y)) return 0;
+  for (int y = 0; y < MapHeight; y++) {
+    if (!IsWall(map, 0, y) || !IsWall(map, MapWidth - 1, y)) {
+      return 0;
+    }
   }
   return 1;
+}
+
+static Entity CreatePlayer(World *world, int tileX, int tileY) {
+  Entity playerEntity = EcsCreate(
+    world,
+    ComponentPosition | ComponentDirection | ComponentHealth | ComponentPlayer
+  );
+  if (playerEntity == EntityNone) {
+    return EntityNone;
+  }
+
+  world->position[playerEntity] = (Vec2){tileX + 0.5, tileY + 0.5};
+  world->direction[playerEntity] = (Vec2){1.0, 0.0};
+  world->health[playerEntity] = PlayerStartingHealth;
+  world->player[playerEntity].ammo = CombatStartingAmmo;
+  return playerEntity;
+}
+
+static Entity CreateEnemy(World *world, int tileX, int tileY) {
+  Entity enemyEntity = EcsCreate(
+    world,
+    ComponentPosition | ComponentHealth | ComponentEnemy
+  );
+  if (enemyEntity == EntityNone) {
+    return EntityNone;
+  }
+
+  world->position[enemyEntity] = (Vec2){tileX + 0.5, tileY + 0.5};
+  world->health[enemyEntity] = CombatEnemyStartingHealth;
+  return enemyEntity;
+}
+
+static Entity CreatePickup(
+  World *world,
+  int tileX,
+  int tileY,
+  PickupType pickupType
+) {
+  Entity pickupEntity = EcsCreate(
+    world,
+    ComponentPosition | ComponentPickup
+  );
+  if (pickupEntity == EntityNone) {
+    return EntityNone;
+  }
+
+  world->position[pickupEntity] = (Vec2){tileX + 0.5, tileY + 0.5};
+  world->pickup[pickupEntity] = pickupType;
+  return pickupEntity;
 }
 
 int ReadMap(const char *path, GameMap *map, World *world, Entity *playerEntity) {
   FILE *file = fopen(path, "rb");
   int foundPlayer = 0;
   int enemyCount = 0;
+  int pickupCount = 0;
 
   EcsInit(world);
-  *playerEntity = ENTITY_NONE;
-  if (!file) return 0;
+  *playerEntity = EntityNone;
+  if (!file) {
+    return 0;
+  }
 
-  for (int y = 0; y < MAP_HEIGHT; y++) {
-    if (fscanf(file, "%16s", map->tiles[y]) != 1 || strlen(map->tiles[y]) != MAP_WIDTH) goto invalid;
+  for (int y = 0; y < MapHeight; y++) {
+    // The map is fixed at 16 columns, so fscanf may read at most 16 characters.
+    int readLine = fscanf(file, "%16s", map->tiles[y]);
+    if (readLine != 1 || strlen(map->tiles[y]) != MapWidth) {
+      goto invalidMap;
+    }
 
-    for (int x = 0; x < MAP_WIDTH; x++) {
+    for (int x = 0; x < MapWidth; x++) {
       char tile = map->tiles[y][x];
-      if (tile == 'P') {
-        if (foundPlayer) goto invalid;
-        *playerEntity = EcsCreate(world, COMPONENT_POSITION | COMPONENT_DIRECTION | COMPONENT_PLAYER);
-        if (*playerEntity == ENTITY_NONE) goto invalid;
-        world->direction[*playerEntity] = (Vec2){1.0, 0.0};
-        world->player[*playerEntity].ammo = COMBAT_STARTING_AMMO;
-        world->position[*playerEntity] = (Vec2){x + 0.5, y + 0.5};
-        map->tiles[y][x] = '.';
-        foundPlayer = 1;
-      } else if (tile == 'E') {
-        if (enemyCount >= MAP_MAX_ENEMIES) goto invalid;
-        Entity enemy = EcsCreate(world, COMPONENT_POSITION | COMPONENT_HEALTH | COMPONENT_ENEMY);
-        if (enemy == ENTITY_NONE) goto invalid;
-        world->position[enemy] = (Vec2){x + 0.5, y + 0.5};
-        world->health[enemy] = COMBAT_ENEMY_STARTING_HEALTH;
-        enemyCount++;
-        map->tiles[y][x] = '.';
-      } else if (tile != '#' && tile != '.') goto invalid;
+      switch (tile) {
+        case 'P':
+          if (foundPlayer) {
+            goto invalidMap;
+          }
+          *playerEntity = CreatePlayer(world, x, y);
+          if (*playerEntity == EntityNone) {
+            goto invalidMap;
+          }
+          foundPlayer = 1;
+          map->tiles[y][x] = '.';
+          break;
+
+        case 'E': {
+          if (enemyCount >= MapMaxEnemies ||
+              CreateEnemy(world, x, y) == EntityNone) {
+            goto invalidMap;
+          }
+          enemyCount++;
+          map->tiles[y][x] = '.';
+          break;
+        }
+
+        case 'A':
+        case 'H': {
+          PickupType pickupType = tile == 'A' ? PickupAmmo : PickupHealth;
+          if (pickupCount >= MapMaxPickups ||
+              CreatePickup(world, x, y, pickupType) == EntityNone) {
+            goto invalidMap;
+          }
+          pickupCount++;
+          map->tiles[y][x] = '.';
+          break;
+        }
+
+        case '#':
+        case '.':
+          break;
+
+        default:
+          goto invalidMap;
+      }
     }
   }
 
   char extra[2];
-  if (fscanf(file, "%1s", extra) == 1 || !foundPlayer || !HasClosedBorders(map)) goto invalid;
+  if (fscanf(file, "%1s", extra) == 1 ||
+      !foundPlayer ||
+      !HasClosedBorders(map)) {
+    goto invalidMap;
+  }
   fclose(file);
   return 1;
 
-invalid:
+invalidMap:
   fclose(file);
   EcsInit(world);
-  *playerEntity = ENTITY_NONE;
+  *playerEntity = EntityNone;
   return 0;
 }

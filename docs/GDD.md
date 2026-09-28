@@ -10,7 +10,9 @@ De game is vooral bedoeld voor mensen die van oude games houden of willen zien h
 
 ## Hoe de game werkt
 
-De speler kan lopen, draaien en schieten. Je begint met 48 kogels. Een vijand is dood na twee keer raken. Voor elke verslagen vijand krijg je 100 punten. Vijanden zoeken via de vrije vakken van de map een korte route naar de speler.
+De speler kan lopen, draaien en schieten. Je begint met 100 gezondheid en 48 kogels. Een vijand is dood na twee keer raken. Voor elke verslagen vijand krijg je 100 punten. Vijanden zoeken via de vrije vakken van de map een korte route naar de speler.
+
+In de map liggen munitie- en gezondheidspickups. De speler pakt ze automatisch op door over hetzelfde kaartvak te lopen. Een munitiepickup geeft 12 kogels. Een gezondheidspickup herstelt 25 gezondheid, maar nooit tot boven 100. Een gezondheidspickup blijft liggen wanneer de speler al de maximale gezondheid heeft.
 
 Muren houden de speler en vijanden tegen. Je kunt ook niet door een muur heen schieten. Als alle vijanden weg zijn, verschijnt het overwinningsscherm.
 
@@ -27,7 +29,7 @@ Muren houden de speler en vijanden tegen. Je kunt ook niet door een muur heen sc
 
 De muren, vloer, vijanden en het wapen bestaan uit ASCII-tekens. Muren die verder weg zijn worden donkerder. Hierdoor lijkt de wereld 3D.
 
-Boven in beeld staat hoeveel kogels en punten je hebt. Daar staat ook hoeveel vijanden nog leven. De game heeft geen geluid of muziek.
+Boven in beeld staat hoeveel gezondheid, kogels en punten je hebt. Daar staat ook hoeveel vijanden nog leven. De game heeft geen geluid of muziek.
 
 ## Techniek
 
@@ -41,6 +43,7 @@ De code is verdeeld over meerdere bestanden:
 - `raycast.c` berekent welke muren je ziet.
 - `ecs.c` bewaart de speler en vijanden.
 - `enemy.c` berekent routes en regelt beweging en rendering van vijanden.
+- `pickup.c` regelt het oppakken en renderen van voorwerpen.
 - `combat.c` regelt schieten, schade en punten.
 - `weapon.c` tekent het wapen.
 
@@ -48,7 +51,7 @@ De map staat in `src/assets/map.txt`.
 
 ## Testen
 
-Er zijn automatische tests voor munitie, raycasting, botsingen met muren en het laden van de map. Deze tests start ik met:
+Er zijn automatische tests voor munitie, pickups, raycasting, botsingen met muren en het laden van de map. Deze tests start ik met:
 
 ```bash
 ./build.sh test
@@ -60,7 +63,8 @@ Ik moet de game ook zelf testen. Ik controleer dan het lopen, draaien, schieten,
 
 - Er is maar één level.
 - Vijanden schieten niet terug.
-- Er zijn geen deuren of voorwerpen om op te pakken.
+- Er zijn geen deuren.
+- Vijanden brengen nog geen schade toe, waardoor de gezondheidspickup tijdens normaal spelen nog niet nodig is.
 - Er is geen geluid.
 - Er is geen verliesscherm.
 - Je kunt de toetsen en kleuren niet aanpassen.

@@ -2,37 +2,42 @@
 
 #include "raycast.h"
 
-RayHit CastRay(const GameMap *map, Vec2 pos, Vec2 rayDir) {
-  int mapX = (int)pos.x;
-  int mapY = (int)pos.y;
-  double deltaX = rayDir.x == 0.0 ? HUGE_VAL : fabs(1.0 / rayDir.x);
-  double deltaY = rayDir.y == 0.0 ? HUGE_VAL : fabs(1.0 / rayDir.y);
-  int stepX = rayDir.x < 0.0 ? -1 : 1;
-  int stepY = rayDir.y < 0.0 ? -1 : 1;
-  double sideX = rayDir.x < 0.0
-    ? (pos.x - mapX) * deltaX
-    : (mapX + 1.0 - pos.x) * deltaX;
-  double sideY = rayDir.y < 0.0
-    ? (pos.y - mapY) * deltaY
-    : (mapY + 1.0 - pos.y) * deltaY;
-  RaySide side = RAY_SIDE_X;
+RayHit CastRay(const GameMap *map, Vec2 position, Vec2 rayDirection) {
+  int mapTileX = (int)position.x;
+  int mapTileY = (int)position.y;
+  double distancePerTileX = rayDirection.x == 0.0 ?
+    HUGE_VAL : fabs(1.0 / rayDirection.x);
+  double distancePerTileY = rayDirection.y == 0.0 ?
+    HUGE_VAL : fabs(1.0 / rayDirection.y);
+  int stepX = rayDirection.x < 0.0 ? -1 : 1;
+  int stepY = rayDirection.y < 0.0 ? -1 : 1;
+  double distanceToNextX = rayDirection.x < 0.0
+    ? (position.x - mapTileX) * distancePerTileX
+    : (mapTileX + 1.0 - position.x) * distancePerTileX;
+  double distanceToNextY = rayDirection.y < 0.0
+    ? (position.y - mapTileY) * distancePerTileY
+    : (mapTileY + 1.0 - position.y) * distancePerTileY;
+  RaySide wallSide = RaySideX;
 
-  // Prevent warning (;;) loop
+  // DDA visits one map tile at a time, always crossing the nearest grid line.
   for (;;) {
-    if (sideX < sideY) {
-      sideX += deltaX;
-      mapX += stepX;
-      side = RAY_SIDE_X;
+    if (distanceToNextX < distanceToNextY) {
+      distanceToNextX += distancePerTileX;
+      mapTileX += stepX;
+      wallSide = RaySideX;
     } else {
-      sideY += deltaY;
-      mapY += stepY;
-      side = RAY_SIDE_Y;
+      distanceToNextY += distancePerTileY;
+      mapTileY += stepY;
+      wallSide = RaySideY;
     }
 
-    if (mapX < 0 || mapX >= MAP_WIDTH || mapY < 0 || mapY >= MAP_HEIGHT ||
-        map->tiles[mapY][mapX] == '#') {
-      double distance = side == RAY_SIDE_X ? sideX - deltaX : sideY - deltaY;
-      return (RayHit){distance, side};
+    int outsideMap = mapTileX < 0 || mapTileX >= MapWidth ||
+                     mapTileY < 0 || mapTileY >= MapHeight;
+    if (outsideMap || map->tiles[mapTileY][mapTileX] == '#') {
+      double wallDistance = wallSide == RaySideX ?
+        distanceToNextX - distancePerTileX :
+        distanceToNextY - distancePerTileY;
+      return (RayHit){wallDistance, wallSide};
     }
   }
 }

@@ -13,9 +13,10 @@ De game gebruikt geen echte 3D-modellen. Met raycasting en ASCII-tekens wordt ee
 - Muren waar je niet doorheen kunt lopen.
 - Vijanden waarop je kunt schieten.
 - Vijanden die via een eenvoudige kortste route naar je toe lopen.
-- Munitie, schade, score en een hitmarker.
+- Munitie- en gezondheidspickups die je oppakt door eroverheen te lopen.
+- Gezondheid, munitie, schade, score en een hitmarker.
 - Een ASCII-wapen met een simpele schietanimatie.
-- Een HUD met munitie, score en het aantal vijanden.
+- Een HUD met gezondheid, munitie, score en het aantal vijanden.
 - Een overwinningsscherm met een vallende ASCII-animatie.
 - Kleuren en donkere muren op afstand.
 - Automatische tests in de map `tests/`.
@@ -64,6 +65,7 @@ De automatische tests staan al in de map `tests/`. Ze testen:
 - botsingen met muren en de rand van de map;
 - routes van vijanden rond muren;
 - geldige en ongeldige mapbestanden.
+- het oppakken van munitie en gezondheid.
 
 Start alle tests met GCC:
 
@@ -100,6 +102,8 @@ De map staat in `src/assets/map.txt` en is 16 bij 16 tekens groot.
 | `.` | Lege ruimte |
 | `P` | Startplek van de speler |
 | `E` | Startplek van een vijand |
+| `A` | Munitiepickup, geeft 12 kogels |
+| `H` | Gezondheidspickup, herstelt maximaal 25 gezondheid |
 
 De buitenkant van de map moet helemaal uit muren bestaan. Er moet precies één speler in de map staan.
 
@@ -111,6 +115,7 @@ De buitenkant van de map moet helemaal uit muren bestaan. Er moet precies één 
 - `src/raycast.c`: maakt het 3D-effect.
 - `src/ecs.c`: bewaart de speler en vijanden.
 - `src/enemy.c`: telt, beweegt en tekent de vijanden.
+- `src/pickup.c`: regelt het oppakken en tekenen van voorwerpen.
 - `src/combat.c`: regelt schieten, schade en punten.
 - `src/weapon.c`: tekent het wapen.
 - `src/assets/map.txt`: bevat het level.
@@ -122,7 +127,8 @@ De buitenkant van de map moet helemaal uit muren bestaan. Er moet precies één 
 
 - Er is maar één level.
 - Vijanden schieten niet terug.
-- Er zijn geen deuren of voorwerpen om op te pakken.
+- Er zijn geen deuren.
+- Vijanden brengen nog geen schade toe, waardoor de gezondheidspickup tijdens normaal spelen nog niet nodig is.
 - Er is geen geluid of muziek.
 - Er is geen verliesscherm.
 - Je kunt de toetsen en kleuren niet aanpassen.
@@ -132,6 +138,10 @@ De buitenkant van de map moet helemaal uit muren bestaan. Er moet precies één 
 Met C kan ik zelf de berekeningen, game-loop en opslag van gegevens maken. ncursesw regelt de invoer, kleuren en tekst in de terminal. De docent heeft toestemming gegeven om deze game zonder bestaande game-engine te maken.
 
 Voor het schrijven van de code heb ik Neovim gebruikt met LazyVim. LazyVim is een kant-en-klare configuratie voor Neovim met plugins en instellingen. Ik gebruik GCC en Clang om de code te compileren en te testen.
+
+## Naamgeving in de code
+
+Projecttypes, functies en vaste enumwaarden gebruiken `UpperCamelCase`, zoals `PlayerState`, `CastRay` en `MapWidth`. Variabelen en structvelden gebruiken `lowerCamelCase`, zoals `playerEntity` en `shotCooldown`. Namen van C, ncurses en de verplichte functie `main` blijven ongewijzigd.
 
 ## Documentatie
 

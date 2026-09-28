@@ -9,8 +9,8 @@ int main(void) {
   assert(IsWall(&map, 3.5, 2.5));
   assert(!IsWall(&map, 2.5, 2.5));
   assert(IsWall(&map, -0.1, 2.0));
-  assert(IsWall(&map, MAP_WIDTH, 2.0));
+  assert(IsWall(&map, MapWidth, 2.0));
   assert(IsWall(&map, 2.0, -0.1));
-  assert(IsWall(&map, 2.0, MAP_HEIGHT));
+  assert(IsWall(&map, 2.0, MapHeight));
   return 0;
 }

@@ -12,7 +12,7 @@ LazyVim is geen losse extensie. Het is een kant-en-klare configuratie voor Neovi
 
 ## Automatische tests
 
-Laatste automatische controle: 10 september 2026.
+Laatste automatische controle: 28 september 2026.
 
 Ik heb de tests uitgevoerd met:
 
@@ -27,6 +27,7 @@ Ik heb de tests uitgevoerd met:
 | `collision.c` | Botsingen met muren en de rand van de map | Geslaagd |
 | `enemy.c` | Routes, muren, onbereikbare vijanden en stopafstand | Geslaagd |
 | `mapvalidatie.c` | Geldige en ongeldige mapbestanden | Geslaagd |
+| `pickup.c` | Munitie oppakken, gezondheid herstellen, maximumgezondheid en afstand | Geslaagd |
 
 Alle automatische tests zijn geslaagd met GCC en Clang.
 
@@ -61,3 +62,13 @@ Bij Windows Terminal draaide de game in de Linux-omgeving van Docker. Dit is dus
 ## Conclusie
 
 De automatische tests en het compileren met GCC en Clang zijn geslaagd. De eerder vastgelegde handmatige controles in Ghostty en Windows Terminal via Docker zijn geslaagd. Hits, misses, schade, wall occlusion en kills hebben nog geen eigen automatische test.
+
+## Nog handmatig te controleren
+
+De pickup-rendering is nog niet handmatig in een terminal gecontroleerd. Controleer daarom nog dat:
+
+- `A` als gele munitiepickup en `+` als groene gezondheidspickup zichtbaar zijn;
+- muren pickups verbergen wanneer ze erachter staan;
+- over een munitiepickup lopen de HUD-waarde met 12 verhoogt en de pickup verwijdert;
+- een gezondheidspickup blijft liggen bij 100 gezondheid;
+- de HUD leesbaar blijft in een terminal van 20 bij 10 tekens en zonder kleurondersteuning.

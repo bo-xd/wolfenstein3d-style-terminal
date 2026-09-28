@@ -1,44 +1,57 @@
 #pragma once
 
 typedef enum MapLimit {
-  MAP_WIDTH = 16,
-  MAP_HEIGHT = 16,
-  MAP_MAX_ENEMIES = 16
+  MapWidth = 16,
+  MapHeight = 16,
+  MapMaxEnemies = 16,
+  MapMaxPickups = 16
 } MapLimit;
 
+typedef enum PlayerSetting {
+  PlayerStartingHealth = 100,
+  PlayerMaxHealth = 100
+} PlayerSetting;
+
+typedef enum PickupSetting {
+  PickupAmmoAmount = 12,
+  PickupHealthAmount = 25
+} PickupSetting;
+
 typedef enum CombatSetting {
-  COMBAT_STARTING_AMMO = 48,
-  COMBAT_SHOT_COOLDOWN = 8,
-  COMBAT_SHOT_ANIMATION_TICKS = 5,
-  COMBAT_ENEMY_STARTING_HEALTH = 2,
-  COMBAT_KILL_SCORE = 100
+  CombatStartingAmmo = 48,
+  CombatShotCooldown = 8,
+  CombatShotAnimationTicks = 5,
+  CombatEnemyStartingHealth = 2,
+  CombatKillScore = 100
 } CombatSetting;
 
 typedef enum RenderSetting {
-  RENDER_MIN_SCREEN_WIDTH = 20,
-  RENDER_MIN_SCREEN_HEIGHT = 10,
-  RENDER_INPUT_TIMEOUT_MS = 16,
-  RENDER_WALL_SHADE_COUNT = 16,
-  RENDER_SIDE_SHADE_PENALTY = 2,
-  RENDER_CEILING_PATTERN_Y_SCALE = 3,
-  RENDER_CEILING_PATTERN_SPACING = 7,
-  RENDER_VICTORY_FRAMES_PER_ROW = 2
+  RenderMinScreenWidth = 20,
+  RenderMinScreenHeight = 10,
+  RenderInputTimeoutMilliseconds = 16,
+  RenderWallShadeCount = 16,
+  RenderSideShadePenalty = 2,
+  RenderCeilingPatternYScale = 3,
+  RenderCeilingPatternSpacing = 7,
+  RenderVictoryFramesPerRow = 2
 } RenderSetting;
 
 typedef enum ColorPairId {
-  PAIR_FLOOR = 17,
-  PAIR_HUD = 18,
-  PAIR_ENEMY = 19,
-  PAIR_WEAPON_TOP = 20,
-  PAIR_WEAPON_FLASH = 21,
-  PAIR_WEAPON_HAND = 22,
-  PAIR_CEILING = 23,
-  PAIR_WEAPON_SIDE = 24,
-  PAIR_WEAPON_DARK = 25
+  PairFloor = 17,
+  PairHud = 18,
+  PairEnemy = 19,
+  PairWeaponTop = 20,
+  PairWeaponFlash = 21,
+  PairWeaponHand = 22,
+  PairCeiling = 23,
+  PairWeaponSide = 24,
+  PairWeaponDark = 25,
+  PairPickupAmmo = 26,
+  PairPickupHealth = 27
 } ColorPairId;
 
 typedef enum PaletteColorId {
-  PALETTE_WALL_START = 16,
-  PALETTE_FLOOR = 32,
-  PALETTE_WEAPON_HAND = 33
+  PaletteWallStart = 16,
+  PaletteFloor = 32,
+  PaletteWeaponHand = 33
 } PaletteColorId;

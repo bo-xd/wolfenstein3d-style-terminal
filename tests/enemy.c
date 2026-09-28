@@ -4,18 +4,26 @@
 #include "enemy.h"
 
 static void MakeOpenMap(GameMap *map) {
-  for (int y = 0; y < MAP_HEIGHT; y++) {
-    for (int x = 0; x < MAP_WIDTH; x++) {
-      map->tiles[y][x] = x == 0 || x == MAP_WIDTH - 1 || y == 0 || y == MAP_HEIGHT - 1 ? '#' : '.';
+  for (int y = 0; y < MapHeight; y++) {
+    for (int x = 0; x < MapWidth; x++) {
+      int isBorder = x == 0 || x == MapWidth - 1 ||
+                     y == 0 || y == MapHeight - 1;
+      map->tiles[y][x] = isBorder ? '#' : '.';
     }
-    map->tiles[y][MAP_WIDTH] = '\0';
+    map->tiles[y][MapWidth] = '\0';
   }
 }
 
-static void AddPlayerAndEnemy(World *world, Entity *player, Entity *enemy, Vec2 playerPosition, Vec2 enemyPosition) {
+static void AddPlayerAndEnemy(
+  World *world,
+  Entity *player,
+  Entity *enemy,
+  Vec2 playerPosition,
+  Vec2 enemyPosition
+) {
   EcsInit(world);
-  *player = EcsCreate(world, COMPONENT_POSITION | COMPONENT_PLAYER);
-  *enemy = EcsCreate(world, COMPONENT_POSITION | COMPONENT_ENEMY);
+  *player = EcsCreate(world, ComponentPosition | ComponentPlayer);
+  *enemy = EcsCreate(world, ComponentPosition | ComponentEnemy);
   world->position[*player] = playerPosition;
   world->position[*enemy] = enemyPosition;
 }

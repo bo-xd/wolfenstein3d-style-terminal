@@ -4,66 +4,109 @@
 #include "game_config.h"
 #include "raycast.h"
 
-static const double ENEMY_RADIUS = 0.30;
+static const double enemyRadius = 0.30;
 
-static ShotResult Shoot(World *world, Vec2 pos, Vec2 dir, const GameMap *map) {
-  double closestHit = CastRay(map, pos, dir).distance;
-  Entity target = ENTITY_NONE;
-  const uint32_t required = COMPONENT_POSITION | COMPONENT_HEALTH | COMPONENT_ENEMY;
+static ShotResult Shoot(
+  World *world,
+  Vec2 playerPosition,
+  Vec2 shotDirection,
+  const GameMap *map
+) {
+  double closestHitDistance =
+    CastRay(map, playerPosition, shotDirection).distance;
+  Entity targetEntity = EntityNone;
+  const uint32_t requiredComponents =
+    ComponentPosition | ComponentHealth | ComponentEnemy;
 
-  for (Entity entity = 0; entity < ECS_MAX_ENTITIES; entity++) {
-    if (!EcsHas(world, entity, required)) continue;
+  for (Entity entity = 0; entity < EcsMaxEntities; entity++) {
+    if (!EcsHas(world, entity, requiredComponents)) {
+      continue;
+    }
 
-    double relativeX = world->position[entity].x - pos.x;
-    double relativeY = world->position[entity].y - pos.y;
-    double forward = relativeX * dir.x + relativeY * dir.y;
-    double lateral = fabs(relativeX * dir.y - relativeY * dir.x);
+    double relativeX = world->position[entity].x - playerPosition.x;
+    double relativeY = world->position[entity].y - playerPosition.y;
+    double distanceForward =
+      relativeX * shotDirection.x + relativeY * shotDirection.y;
+    double distanceSideways = fabs(
+      relativeX * shotDirection.y - relativeY * shotDirection.x
+    );
 
-    if (forward <= 0.0 || lateral > ENEMY_RADIUS) continue;
+    if (distanceForward <= 0.0 || distanceSideways > enemyRadius) {
+      continue;
+    }
 
-    double hitOffset = sqrt(ENEMY_RADIUS * ENEMY_RADIUS - lateral * lateral);
-    double hitDistance = forward - hitOffset;
-    if (hitDistance >= 0.0 && hitDistance < closestHit) {
-      closestHit = hitDistance;
-      target = entity;
+    double hitOffset = sqrt(
+      enemyRadius * enemyRadius - distanceSideways * distanceSideways
+    );
+    double hitDistance = distanceForward - hitOffset;
+    if (hitDistance >= 0.0 && hitDistance < closestHitDistance) {
+      closestHitDistance = hitDistance;
+      targetEntity = entity;
     }
   }
 
-  if (target == ENTITY_NONE) return SHOT_MISS;
+  if (targetEntity == EntityNone) {
+    return ShotMiss;
+  }
 
-  world->health[target]--;
-  if (world->health[target] > 0) return SHOT_HIT;
+  world->health[targetEntity]--;
+  if (world->health[targetEntity] > 0) {
+    return ShotHit;
+  }
 
-  EcsDestroy(world, target);
-  return SHOT_KILL;
+  EcsDestroy(world, targetEntity);
+  return ShotKill;
 }
 
 int CombatTryFire(PlayerState *player) {
-  if (player->shotCooldown > 0 || player->ammo <= 0) return 0;
+  if (player->shotCooldown > 0 || player->ammo <= 0) {
+    return 0;
+  }
 
   player->ammo--;
-  player->shotCooldown = COMBAT_SHOT_COOLDOWN;
-  player->shotTicks = COMBAT_SHOT_ANIMATION_TICKS;
+  player->shotCooldown = CombatShotCooldown;
+  player->shotTicks = CombatShotAnimationTicks;
   return 1;
 }
 
 void CombatSystem(World *world, Entity playerEntity, const GameMap *map) {
-  const uint32_t required = COMPONENT_POSITION | COMPONENT_DIRECTION | COMPONENT_PLAYER;
-  if (!EcsHas(world, playerEntity, required) || !CombatTryFire(&world->player[playerEntity])) return;
+  const uint32_t requiredComponents =
+    ComponentPosition | ComponentDirection | ComponentPlayer;
+  if (!EcsHas(world, playerEntity, requiredComponents) ||
+      !CombatTryFire(&world->player[playerEntity])) {
+    return;
+  }
 
   PlayerState *player = &world->player[playerEntity];
-  ShotResult result = Shoot(world, world->position[playerEntity], world->direction[playerEntity], map);
-  if (result == SHOT_KILL) player->score += COMBAT_KILL_SCORE;
-  if (result != SHOT_MISS) player->hitMarkerTicks = COMBAT_SHOT_ANIMATION_TICKS;
+  ShotResult shotResult = Shoot(
+    world,
+    world->position[playerEntity],
+    world->direction[playerEntity],
+    map
+  );
+  if (shotResult == ShotKill) {
+    player->score += CombatKillScore;
+  }
+  if (shotResult != ShotMiss) {
+    player->hitMarkerTicks = CombatShotAnimationTicks;
+  }
 }
 
 void CombatTimerSystem(World *world) {
-  for (Entity entity = 0; entity < ECS_MAX_ENTITIES; entity++) {
-    if (!EcsHas(world, entity, COMPONENT_PLAYER)) continue;
+  for (Entity entity = 0; entity < EcsMaxEntities; entity++) {
+    if (!EcsHas(world, entity, ComponentPlayer)) {
+      continue;
+    }
 
     PlayerState *player = &world->player[entity];
-    if (player->shotCooldown > 0) player->shotCooldown--;
-    if (player->shotTicks > 0) player->shotTicks--;
-    if (player->hitMarkerTicks > 0) player->hitMarkerTicks--;
+    if (player->shotCooldown > 0) {
+      player->shotCooldown--;
+    }
+    if (player->shotTicks > 0) {
+      player->shotTicks--;
+    }
+    if (player->hitMarkerTicks > 0) {
+      player->hitMarkerTicks--;
+    }
   }
 }

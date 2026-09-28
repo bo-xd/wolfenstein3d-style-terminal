@@ -6,8 +6,8 @@ typedef struct Vec2 {
 } Vec2;
 
 typedef enum RaySide {
-  RAY_SIDE_X,
-  RAY_SIDE_Y
+  RaySideX,
+  RaySideY
 } RaySide;
 
 typedef struct RayHit {
@@ -16,7 +16,7 @@ typedef struct RayHit {
 } RayHit;
 
 typedef enum ShotResult {
-  SHOT_MISS,
-  SHOT_HIT,
-  SHOT_KILL
+  ShotMiss,
+  ShotHit,
+  ShotKill
 } ShotResult;

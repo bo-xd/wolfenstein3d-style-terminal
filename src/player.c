@@ -1,30 +1,46 @@
+#include <math.h>
+
 #include "player.h"
+
+const PlayerSettings defaultPlayerSettings = {
+  .cameraFov = 0.66,
+  .moveSpeed = 0.20,
+  .turnSpeed = 0.12
+};
 
 void MovementSystem(World *world, Entity playerEntity, const GameMap *map, double amount) {
   if (!EcsHas(
         world,
         playerEntity,
-        COMPONENT_POSITION | COMPONENT_DIRECTION | COMPONENT_PLAYER
-      )) return;
+        ComponentPosition | ComponentDirection | ComponentPlayer
+      )) {
+    return;
+  }
 
-  Vec2 *pos = &world->position[playerEntity];
-  Vec2 dir = world->direction[playerEntity];
-  double nextX = pos->x + dir.x * amount;
-  double nextY = pos->y + dir.y * amount;
+  Vec2 *position = &world->position[playerEntity];
+  Vec2 direction = world->direction[playerEntity];
+  double nextX = position->x + direction.x * amount;
+  double nextY = position->y + direction.y * amount;
 
-  if (!IsWall(map, nextX, pos->y)) pos->x = nextX;
-  if (!IsWall(map, pos->x, nextY)) pos->y = nextY;
+  if (!IsWall(map, nextX, position->y)) {
+    position->x = nextX;
+  }
+  if (!IsWall(map, position->x, nextY)) {
+    position->y = nextY;
+  }
 }
 
 void TurnSystem(World *world, Entity playerEntity, double angle) {
   if (!EcsHas(
         world,
         playerEntity,
-        COMPONENT_DIRECTION | COMPONENT_PLAYER
-      )) return;
+        ComponentDirection | ComponentPlayer
+      )) {
+    return;
+  }
 
-  Vec2 *dir = &world->direction[playerEntity];
-  double oldX = dir->x;
-  dir->x = dir->x * cos(angle) - dir->y * sin(angle);
-  dir->y = oldX * sin(angle) + dir->y * cos(angle);
+  Vec2 *direction = &world->direction[playerEntity];
+  double oldX = direction->x;
+  direction->x = direction->x * cos(angle) - direction->y * sin(angle);
+  direction->y = oldX * sin(angle) + direction->y * cos(angle);
 }

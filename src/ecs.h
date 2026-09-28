@@ -4,18 +4,25 @@
 
 #include "game_types.h"
 
-#define ECS_MAX_ENTITIES 128
-#define ENTITY_NONE UINT16_MAX
+#define EcsMaxEntities 128
+#define EntityNone UINT16_MAX
 
 typedef uint16_t Entity;
 
 typedef enum ComponentMask {
-  COMPONENT_POSITION = 1u << 0,
-  COMPONENT_DIRECTION = 1u << 1,
-  COMPONENT_HEALTH = 1u << 2,
-  COMPONENT_PLAYER = 1u << 3,
-  COMPONENT_ENEMY = 1u << 4
+  ComponentPosition = 1u << 0,
+  ComponentDirection = 1u << 1,
+  ComponentHealth = 1u << 2,
+  ComponentPlayer = 1u << 3,
+  ComponentEnemy = 1u << 4,
+  ComponentPickup = 1u << 5
 } ComponentMask;
+
+typedef enum PickupType {
+  PickupNone,
+  PickupAmmo,
+  PickupHealth
+} PickupType;
 
 typedef struct PlayerState {
   int ammo;
@@ -26,11 +33,12 @@ typedef struct PlayerState {
 } PlayerState;
 
 typedef struct World {
-  uint32_t mask[ECS_MAX_ENTITIES];
-  Vec2 position[ECS_MAX_ENTITIES];
-  Vec2 direction[ECS_MAX_ENTITIES];
-  int health[ECS_MAX_ENTITIES];
-  PlayerState player[ECS_MAX_ENTITIES];
+  uint32_t mask[EcsMaxEntities];
+  Vec2 position[EcsMaxEntities];
+  Vec2 direction[EcsMaxEntities];
+  int health[EcsMaxEntities];
+  PlayerState player[EcsMaxEntities];
+  PickupType pickup[EcsMaxEntities];
 } World;
 
 void EcsInit(World *world);
