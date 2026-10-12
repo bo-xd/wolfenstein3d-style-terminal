@@ -25,7 +25,7 @@ Ik heb de tests uitgevoerd met:
 | `ammo.c` | Munitie en tijd tussen schoten | Geslaagd |
 | `castray.c` | Horizontale en verticale raycasting | Geslaagd |
 | `collision.c` | Botsingen met muren en de rand van de map | Geslaagd |
-| `enemy.c` | Routes, muren, onbereikbare vijanden en stopafstand | Geslaagd |
+| `enemy.c` | Routes, muren, stopafstand, waarnemingsafstand, schade-alert, padkeuzevariatie, bezette vakken, aanvallen, wave-spawns en wave-snelheidsbonus | Geslaagd |
 | `mapvalidatie.c` | Geldige en ongeldige mapbestanden | Geslaagd |
 | `pickup.c` | Munitie oppakken, gezondheid herstellen, maximumgezondheid en afstand | Geslaagd |
 
@@ -65,10 +65,8 @@ De automatische tests en het compileren met GCC en Clang zijn geslaagd. De eerde
 
 ## Nog handmatig te controleren
 
-De pickup-rendering is nog niet handmatig in een terminal gecontroleerd. Controleer daarom nog dat:
-
-- `A` als gele munitiepickup en `+` als groene gezondheidspickup zichtbaar zijn;
-- muren pickups verbergen wanneer ze erachter staan;
-- over een munitiepickup lopen de HUD-waarde met 12 verhoogt en de pickup verwijdert;
-- een gezondheidspickup blijft liggen bij 100 gezondheid;
-- de HUD leesbaar blijft in een terminal van 20 bij 10 tekens en zonder kleurondersteuning.
+- Controleer of het gecentreerde pistool en mondingsvuur visueel goed aansluiten op het vizier.
+- Controleer of de speler schade oploopt wanneer vijanden dichtbij komen, de gezondheid in de HUD afneemt, en het rode Game Over-scherm verschijnt bij 0 gezondheid.
+- Controleer of na het verslaan van alle vijanden in wave 1 en 2 de volgende wave start met `WAVE 2/3` en `WAVE 3/3`, vijanden merkbaar sneller bewegen en de speler bonusmunitie ontvangt.
+- Herstarten met `R` testen na Game Over en overwinning in zowel Ghostty als Docker.
+- Pickup-rendering en HUD-leesbaarheid in een terminal van 20 bij 10 tekens en zonder kleurondersteuning.

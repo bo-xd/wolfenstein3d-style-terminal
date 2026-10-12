@@ -59,6 +59,7 @@ Dit werkt bijvoorbeeld in Ghostty op Linux en in Windows Terminal met Docker Des
 - `A` of pijltje links: links draaien
 - `D` of pijltje rechts: rechts draaien
 - `Spatie` of `F`: schieten
+- `R`: de game herstarten (ook na overwinning)
 - `Q` of `Esc`: afsluiten
 
 ## Kort gezegd

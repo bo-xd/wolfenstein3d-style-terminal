@@ -10,11 +10,13 @@ De game is vooral bedoeld voor mensen die van oude games houden of willen zien h
 
 ## Hoe de game werkt
 
-De speler kan lopen, draaien en schieten. Je begint met 100 gezondheid en 48 kogels. Een vijand is dood na twee keer raken. Voor elke verslagen vijand krijg je 100 punten. Vijanden zoeken via de vrije vakken van de map een korte route naar de speler.
+De speler kan lopen, draaien en schieten. Je begint met 100 gezondheid en 48 kogels. Een vijand is dood na twee keer raken. Voor elke verslagen vijand krijg je 100 punten. Vijanden activeren wanneer de speler binnen bereik komt of wanneer ze geraakt worden. Ze zoeken via de vrije vakken een route naar de speler, kiezen bij gelijke afstanden verschillende kanten rond muren, wijken uit bij bezette vakken en bewegen met variërende snelheden zodat ze niet allemaal tegelijk aankomen. Van dichtbij brengen vijanden 10 schade per aanval toe. Wanneer de gezondheid 0 bereikt, verlies je en verschijnt het Game Over-scherm.
 
-In de map liggen munitie- en gezondheidspickups. De speler pakt ze automatisch op door over hetzelfde kaartvak te lopen. Een munitiepickup geeft 12 kogels. Een gezondheidspickup herstelt 25 gezondheid, maar nooit tot boven 100. Een gezondheidspickup blijft liggen wanneer de speler al de maximale gezondheid heeft.
+Het spel bevat een wave-systeem van 3 rondes. Wanneer alle vijanden in een ronde zijn verslagen, start automatisch de volgende wave. Bij elke nieuwe wave spawnen de vijanden opnieuw, bewegen ze merkbaar sneller en ontvangt de speler 24 bonuskogels. De HUD toont de huidige ronde (bijvoorbeeld WAVE 1/3). Na het voltooien van Wave 3 behaal je de overwinning.
 
-Muren houden de speler en vijanden tegen. Je kunt ook niet door een muur heen schieten. Als alle vijanden weg zijn, verschijnt het overwinningsscherm.
+In de map liggen munitie- en gezondheidspickups. De speler pakt ze automatisch op door over hetzelfde kaartvak te lopen. Een munitiepickup geeft 12 kogels. Een gezondheidspickup herstelt 25 gezondheid, maar nooit tot boven 100. Gezondheidspickups zijn essentieel om vijandelijke aanvallen te overleven. Een gezondheidspickup blijft liggen wanneer de speler al de maximale gezondheid heeft.
+
+Muren houden de speler en vijanden tegen. Je kunt ook niet door een muur heen schieten. Zowel na een overwinning als na een nederlaag (en tijdens de game) kan het spel direct opnieuw worden gestart met `R`.
 
 ## Besturing
 
@@ -23,6 +25,7 @@ Muren houden de speler en vijanden tegen. Je kunt ook niet door een muur heen sc
 - `A` of pijltje links: links draaien
 - `D` of pijltje rechts: rechts draaien
 - `Spatie` of `F`: schieten
+- `R`: de game herstarten
 - `Q` of `Esc`: afsluiten
 
 ## Hoe het eruitziet
@@ -62,9 +65,7 @@ Ik moet de game ook zelf testen. Ik controleer dan het lopen, draaien, schieten,
 ## Wat er nog niet in zit
 
 - Er is maar één level.
-- Vijanden schieten niet terug.
+- Vijanden schieten niet terug (ze vallen alleen van dichtbij aan).
 - Er zijn geen deuren.
-- Vijanden brengen nog geen schade toe, waardoor de gezondheidspickup tijdens normaal spelen nog niet nodig is.
 - Er is geen geluid.
-- Er is geen verliesscherm.
 - Je kunt de toetsen en kleuren niet aanpassen.

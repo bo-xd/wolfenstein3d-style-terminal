@@ -22,8 +22,19 @@ typedef enum CombatSetting {
   CombatShotCooldown = 8,
   CombatShotAnimationTicks = 5,
   CombatEnemyStartingHealth = 2,
-  CombatKillScore = 100
+  CombatKillScore = 100,
+  CombatEnemyDamage = 10,
+  CombatEnemyAttackCooldown = 30
 } CombatSetting;
+
+typedef enum EnemySetting {
+  EnemyNoticeDistance = 8
+} EnemySetting;
+
+typedef enum WaveSetting {
+  WaveMaxRounds = 3,
+  WaveBonusAmmo = 24
+} WaveSetting;
 
 typedef enum RenderSetting {
   RenderMinScreenWidth = 20,

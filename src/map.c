@@ -76,11 +76,11 @@ static Entity CreatePickup(
 int ReadMap(const char *path, GameMap *map, World *world, Entity *playerEntity) {
   FILE *file = fopen(path, "rb");
   int foundPlayer = 0;
-  int enemyCount = 0;
   int pickupCount = 0;
 
   EcsInit(world);
   *playerEntity = EntityNone;
+  map->enemySpawnCount = 0;
   if (!file) {
     return 0;
   }
@@ -108,11 +108,11 @@ int ReadMap(const char *path, GameMap *map, World *world, Entity *playerEntity) 
           break;
 
         case 'E': {
-          if (enemyCount >= MapMaxEnemies ||
+          if (map->enemySpawnCount >= MapMaxEnemies ||
               CreateEnemy(world, x, y) == EntityNone) {
             goto invalidMap;
           }
-          enemyCount++;
+          map->enemySpawns[map->enemySpawnCount++] = (Vec2){x + 0.5, y + 0.5};
           map->tiles[y][x] = '.';
           break;
         }

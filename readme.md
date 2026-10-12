@@ -12,12 +12,14 @@ De game gebruikt geen echte 3D-modellen. Met raycasting en ASCII-tekens wordt ee
 - Lopen en draaien.
 - Muren waar je niet doorheen kunt lopen.
 - Vijanden waarop je kunt schieten.
-- Vijanden die via een eenvoudige kortste route naar je toe lopen.
-- Munitie- en gezondheidspickups die je oppakt door eroverheen te lopen.
+- Vijanden die via gevarieerde routes naar je toe lopen, uitwijken bij bezette vakken en van dichtbij schade toebrengen.
+- Munitie- en gezondheidspickups die je oppakt door eroverheen te lopen (gezondheid herstellen is nodig om te overleven).
 - Gezondheid, munitie, schade, score en een hitmarker.
-- Een ASCII-wapen met een simpele schietanimatie.
-- Een HUD met gezondheid, munitie, score en het aantal vijanden.
-- Een overwinningsscherm met een vallende ASCII-animatie.
+- Een gecentreerd ASCII-wapen met mondingsvuur en terugslaganimatie.
+- Een HUD met gezondheid, munitie, score, het aantal vijanden en het wave-nummer (1/3).
+- Een wave-systeem van 3 rondes met oplopende snelheid en bonusmunitie na elke ronde.
+- Een overwinningsscherm en een verliesscherm (Game Over) met vallende ASCII-animatie.
+- Een herstartoptie met de toets `R` (tijdens het spelen, na verlies en na overwinning).
 - Kleuren en donkere muren op afstand.
 - Automatische tests in de map `tests/`.
 
@@ -54,6 +56,7 @@ Het script bouwt de game en start hem daarna meteen.
 | Links draaien | `A` of pijltje links |
 | Rechts draaien | `D` of pijltje rechts |
 | Schieten | `Spatie` of `F` |
+| Herstarten | `R` |
 | Afsluiten | `Q` of `Esc` |
 
 ## Tests
@@ -63,7 +66,7 @@ De automatische tests staan al in de map `tests/`. Ze testen:
 - munitie en de tijd tussen schoten;
 - raycasting;
 - botsingen met muren en de rand van de map;
-- routes van vijanden rond muren;
+- routes van vijanden rond muren, waarnemingsafstand, padvariatie en bezette vakken;
 - geldige en ongeldige mapbestanden.
 - het oppakken van munitie en gezondheid.
 
@@ -126,11 +129,9 @@ De buitenkant van de map moet helemaal uit muren bestaan. Er moet precies één 
 ## Wat zit er nog niet in?
 
 - Er is maar één level.
-- Vijanden schieten niet terug.
+- Vijanden schieten niet terug (ze vallen alleen van dichtbij aan).
 - Er zijn geen deuren.
-- Vijanden brengen nog geen schade toe, waardoor de gezondheidspickup tijdens normaal spelen nog niet nodig is.
 - Er is geen geluid of muziek.
-- Er is geen verliesscherm.
 - Je kunt de toetsen en kleuren niet aanpassen.
 
 ## Waarom C en ncursesw?

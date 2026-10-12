@@ -20,7 +20,8 @@ static const double renderCeilingDetailStartRatio = 0.20;
 
 typedef enum GameState {
   GamePlaying,
-  GameVictory
+  GameVictory,
+  GameOver
 } GameState;
 
 static int colorsEnabled = 0;
@@ -31,6 +32,14 @@ static const char *const victoryBanner[] = {
   "V   V   I   C       T   O   O RRRR    Y  ",
   " V V    I   C       T   O   O R R     Y  ",
   "  V   IIIII  CCC    T    OOO  R  RR   Y  "
+};
+
+static const char *const gameOverBanner[] = {
+  " GGGG   AAA  M   M EEEEE    OOO  V   V EEEEE RRRR ",
+  "G      A   A MM MM E       O   O V   V E     R   R",
+  "G  GG  AAAAA M M M EEEE    O   O V   V EEEE  RRRR ",
+  "G   G  A   A M   M E       O   O  V V  E     R R  ",
+  " GGGG  A   A M   M EEEEE    OOO    V   EEEEE R  RR"
 };
 
 static void InitColors(void) {
@@ -129,7 +138,69 @@ static void RenderVictorySystem(int frame) {
   attroff(style);
 
   if (bannerY == targetY) {
-    const char *message = "ALL ENEMIES DEFEATED - PRESS Q OR ESC TO QUIT";
+    const char *message = screenWidth >= 60 ?
+      "ALL 3 WAVES CLEARED - PRESS R TO RESTART OR Q/ESC TO QUIT" :
+      "R: RESTART | Q: QUIT";
+    int row = targetY + bannerHeight + 2;
+    int column = (screenWidth - (int)strlen(message)) / 2;
+    if (column < 0) {
+      column = 0;
+    }
+    if (row < screenHeight) {
+      mvaddnstr(row, column, message, screenWidth - column);
+    }
+  }
+  refresh();
+}
+
+static void RenderGameOverSystem(int frame) {
+  int screenHeight;
+  int screenWidth;
+  getmaxyx(stdscr, screenHeight, screenWidth);
+  erase();
+
+  int lineCount = (int)(sizeof(gameOverBanner) / sizeof(gameOverBanner[0]));
+  int bannerWidth = 0;
+  for (int line = 0; line < lineCount; line++) {
+    int width = (int)strlen(gameOverBanner[line]);
+    if (width > bannerWidth) {
+      bannerWidth = width;
+    }
+  }
+
+  int fullBanner = screenWidth >= bannerWidth;
+  int bannerHeight = fullBanner ? lineCount : 1;
+  int targetY = (screenHeight - bannerHeight) / 2;
+  if (targetY < 0) {
+    targetY = 0;
+  }
+  int bannerY = frame / RenderVictoryFramesPerRow - bannerHeight;
+  if (bannerY > targetY) {
+    bannerY = targetY;
+  }
+
+  chtype style = A_BOLD;
+  if (colorsEnabled) {
+    style |= COLOR_PAIR(PairEnemy);
+  }
+  attron(style);
+  for (int line = 0; line < bannerHeight; line++) {
+    const char *text = fullBanner ? gameOverBanner[line] : "*** GAME OVER ***";
+    int row = bannerY + line;
+    int column = (screenWidth - (int)strlen(text)) / 2;
+    if (column < 0) {
+      column = 0;
+    }
+    if (row >= 0 && row < screenHeight) {
+      mvaddnstr(row, column, text, screenWidth - column);
+    }
+  }
+  attroff(style);
+
+  if (bannerY == targetY) {
+    const char *message = screenWidth >= 54 ?
+      "YOU DIED - PRESS R TO RESTART OR Q/ESC TO QUIT" :
+      "R: RESTART | Q: QUIT";
     int row = targetY + bannerHeight + 2;
     int column = (screenWidth - (int)strlen(message)) / 2;
     if (column < 0) {
@@ -155,19 +226,20 @@ static char CrosshairPixel(PlayerState player) {
 static void RenderHud(
   const World *world,
   Entity playerEntity,
-  Vec2 playerPosition,
+  int currentWave,
   int screenWidth
 ) {
   PlayerState player = world->player[playerEntity];
   char hud[128];
   if (screenWidth < 60) {
-    snprintf(hud, sizeof(hud), "HP %d A %d E %d",
-             world->health[playerEntity], player.ammo, CountEnemies(world));
+    snprintf(hud, sizeof(hud), "HP %d A %d E %d W %d/%d",
+             world->health[playerEntity], player.ammo, CountEnemies(world),
+             currentWave, WaveMaxRounds);
   } else {
     snprintf(hud, sizeof(hud),
-             "HEALTH %03d  AMMO %02d  SCORE %04d  ENEMIES %d  POS %.1f,%.1f",
+             "HEALTH %03d  AMMO %02d  SCORE %04d  ENEMIES %d  WAVE %d/%d",
              world->health[playerEntity], player.ammo, player.score,
-             CountEnemies(world), playerPosition.x, playerPosition.y);
+             CountEnemies(world), currentWave, WaveMaxRounds);
   }
 
   chtype hudStyle = colorsEnabled ? COLOR_PAIR(PairHud) : A_NORMAL;
@@ -181,7 +253,8 @@ static void RenderHud(
 static void RenderSystem(
   const World *world,
   Entity playerEntity,
-  const GameMap *map
+  const GameMap *map,
+  int currentWave
 ) {
   if (!EcsHas(
         world,
@@ -301,12 +374,29 @@ static void RenderSystem(
           marker | markerStyle | A_BOLD);
 
   DrawWeapon(screenHeight, screenWidth, player.shotTicks, colorsEnabled);
-  RenderHud(world, playerEntity, playerPosition, screenWidth);
+  RenderHud(world, playerEntity, currentWave, screenWidth);
   refresh();
 }
 
 static int ShouldQuit(int key) {
   return key == 'q' || key == 'Q' || key == 27;
+}
+
+static void RestartGame(
+  GameMap *map,
+  World *world,
+  Entity *playerEntity,
+  GameState *gameState,
+  int *currentWave,
+  int *victoryFrame,
+  int *gameOverFrame
+) {
+  if (ReadMap("src/assets/map.txt", map, world, playerEntity)) {
+    *gameState = GamePlaying;
+    *currentWave = 1;
+    *victoryFrame = 0;
+    *gameOverFrame = 0;
+  }
 }
 
 static void HandleInput(
@@ -374,6 +464,8 @@ int main(void) {
   timeout(RenderInputTimeoutMilliseconds);
 
   int victoryFrame = 0;
+  int gameOverFrame = 0;
+  int currentWave = 1;
   GameState gameState = GamePlaying;
   while (1) {
     int key = getch();
@@ -381,20 +473,48 @@ int main(void) {
     if (ShouldQuit(key)) {
       break;
     }
+    if (key == 'r' || key == 'R') {
+      RestartGame(
+        &map,
+        &world,
+        &playerEntity,
+        &gameState,
+        &currentWave,
+        &victoryFrame,
+        &gameOverFrame
+      );
+      continue;
+    }
     if (gameState == GameVictory) {
       RenderVictorySystem(victoryFrame++);
+      continue;
+    }
+    if (gameState == GameOver) {
+      RenderGameOverSystem(gameOverFrame++);
       continue;
     }
 
     HandleInput(key, &world, playerEntity, &map);
 
     PickupSystem(&world, playerEntity);
-    EnemyMovementSystem(&world, playerEntity, &map);
-    if (CountEnemies(&world) == 0) {
-      gameState = GameVictory;
-      RenderVictorySystem(victoryFrame++);
+    EnemyMovementSystem(&world, playerEntity, &map, currentWave);
+    EnemyAttackSystem(&world, playerEntity);
+
+    if (world.health[playerEntity] <= 0) {
+      gameState = GameOver;
+      RenderGameOverSystem(gameOverFrame++);
+    } else if (CountEnemies(&world) == 0) {
+      if (currentWave < WaveMaxRounds) {
+        currentWave++;
+        SpawnEnemyWave(&world, &map);
+        world.player[playerEntity].ammo += WaveBonusAmmo;
+        RenderSystem(&world, playerEntity, &map, currentWave);
+      } else {
+        gameState = GameVictory;
+        RenderVictorySystem(victoryFrame++);
+      }
     } else {
-      RenderSystem(&world, playerEntity, &map);
+      RenderSystem(&world, playerEntity, &map, currentWave);
       CombatTimerSystem(&world);
     }
   }

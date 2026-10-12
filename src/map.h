@@ -5,6 +5,8 @@
 
 typedef struct GameMap {
   char tiles[MapHeight][MapWidth + 1];
+  Vec2 enemySpawns[MapMaxEnemies];
+  int enemySpawnCount;
 } GameMap;
 
 int IsWall(const GameMap *map, double x, double y);

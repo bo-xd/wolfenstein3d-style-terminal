@@ -4,14 +4,35 @@
 #include "enemy.h"
 #include "game_config.h"
 
-static const double enemyMoveSpeed = 0.015;
+static const double enemyBaseMoveSpeed = 0.015;
+static const double enemySpeedVariation = 0.003;
 static const double enemyStopDistance = 0.75;
+static const double enemyAttackDistance = 0.90;
 static const int neighborOffsets[4][2] = {
   {1, 0},
   {-1, 0},
   {0, 1},
   {0, -1}
 };
+
+static int IsTileOccupiedByEnemy(
+  const World *world,
+  Entity currentEntity,
+  int tileX,
+  int tileY
+) {
+  for (Entity other = 0; other < EcsMaxEntities; other++) {
+    if (other == currentEntity ||
+        !EcsHas(world, other, ComponentPosition | ComponentEnemy)) {
+      continue;
+    }
+    if ((int)world->position[other].x == tileX &&
+        (int)world->position[other].y == tileY) {
+      return 1;
+    }
+  }
+  return 0;
+}
 
 // Breadth-first search stores how many open tiles lead from each tile to the player.
 static void BuildPathDistances(
@@ -61,7 +82,12 @@ static void BuildPathDistances(
   }
 }
 
-void EnemyMovementSystem(World *world, Entity playerEntity, const GameMap *map) {
+void EnemyMovementSystem(
+  World *world,
+  Entity playerEntity,
+  const GameMap *map,
+  int wave
+) {
   if (!EcsHas(world, playerEntity, ComponentPosition | ComponentPlayer)) {
     return;
   }
@@ -83,9 +109,19 @@ void EnemyMovementSystem(World *world, Entity playerEntity, const GameMap *map) 
     Vec2 *position = &world->position[entity];
     double distanceX = playerPosition.x - position->x;
     double distanceY = playerPosition.y - position->y;
-    if (hypot(distanceX, distanceY) <= enemyStopDistance) {
+    double distanceToPlayerTotal = hypot(distanceX, distanceY);
+    if (distanceToPlayerTotal <= enemyStopDistance) {
       continue;
     }
+
+    int isAlert = (world->health[entity] > 0 &&
+                   world->health[entity] < CombatEnemyStartingHealth) ||
+                  (world->direction[entity].x > 0.5) ||
+                  (distanceToPlayerTotal <= EnemyNoticeDistance);
+    if (!isAlert) {
+      continue;
+    }
+    world->direction[entity].x = 1.0;
 
     int tileX = (int)position->x;
     int tileY = (int)position->y;
@@ -101,8 +137,10 @@ void EnemyMovementSystem(World *world, Entity playerEntity, const GameMap *map) 
     if (bestDistance <= 0) {
       continue;
     }
+    int nextOccupied = 1;
 
-    for (int neighborIndex = 0; neighborIndex < 4; neighborIndex++) {
+    for (int i = 0; i < 4; i++) {
+      int neighborIndex = (i + entity) % 4;
       int candidateX = tileX + neighborOffsets[neighborIndex][0];
       int candidateY = tileY + neighborOffsets[neighborIndex][1];
       if (IsWall(map, candidateX, candidateY)) {
@@ -110,10 +148,34 @@ void EnemyMovementSystem(World *world, Entity playerEntity, const GameMap *map) 
       }
 
       int candidateDistance = distanceToPlayer[candidateY][candidateX];
-      if (candidateDistance >= 0 && candidateDistance < bestDistance) {
+      if (candidateDistance < 0 ||
+          candidateDistance >= distanceToPlayer[tileY][tileX]) {
+        continue;
+      }
+
+      int candidateOccupied = IsTileOccupiedByEnemy(
+        world,
+        entity,
+        candidateX,
+        candidateY
+      );
+
+      int shouldSelect = 0;
+      if (candidateDistance < bestDistance) {
+        if (!candidateOccupied || nextOccupied) {
+          shouldSelect = 1;
+        }
+      } else if (candidateDistance == bestDistance) {
+        if (!candidateOccupied && nextOccupied) {
+          shouldSelect = 1;
+        }
+      }
+
+      if (shouldSelect) {
         nextX = candidateX;
         nextY = candidateY;
         bestDistance = candidateDistance;
+        nextOccupied = candidateOccupied;
       }
     }
 
@@ -124,13 +186,71 @@ void EnemyMovementSystem(World *world, Entity playerEntity, const GameMap *map) 
       continue;
     }
 
-    double step = fmin(enemyMoveSpeed, moveDistance) / moveDistance;
+    double waveSpeedBonus = (wave > 1 ? (wave - 1) * 0.004 : 0.0);
+    double moveSpeed = enemyBaseMoveSpeed + waveSpeedBonus +
+      (entity % 2 == 0 ? enemySpeedVariation : -enemySpeedVariation);
+    double step = fmin(moveSpeed, moveDistance) / moveDistance;
     Vec2 newPosition = {
       position->x + moveX * step,
       position->y + moveY * step
     };
     if (!IsWall(map, newPosition.x, newPosition.y)) {
       *position = newPosition;
+    }
+  }
+}
+
+void SpawnEnemyWave(World *world, const GameMap *map) {
+  for (int i = 0; i < map->enemySpawnCount; i++) {
+    Entity enemyEntity = EcsCreate(
+      world,
+      ComponentPosition | ComponentHealth | ComponentEnemy
+    );
+    if (enemyEntity == EntityNone) {
+      break;
+    }
+
+    world->position[enemyEntity] = map->enemySpawns[i];
+    world->health[enemyEntity] = CombatEnemyStartingHealth;
+    world->direction[enemyEntity] = (Vec2){0.0, 0.0};
+  }
+}
+
+void EnemyAttackSystem(World *world, Entity playerEntity) {
+  if (!EcsHas(
+        world,
+        playerEntity,
+        ComponentPosition | ComponentHealth | ComponentPlayer
+      )) {
+    return;
+  }
+
+  Vec2 playerPosition = world->position[playerEntity];
+
+  for (Entity entity = 0; entity < EcsMaxEntities; entity++) {
+    if (!EcsHas(
+          world,
+          entity,
+          ComponentPosition | ComponentHealth | ComponentEnemy
+        )) {
+      continue;
+    }
+
+    if (world->direction[entity].y > 0.0) {
+      world->direction[entity].y -= 1.0;
+    }
+
+    double distanceX = playerPosition.x - world->position[entity].x;
+    double distanceY = playerPosition.y - world->position[entity].y;
+    double distance = hypot(distanceX, distanceY);
+
+    if (distance <= enemyAttackDistance && world->direction[entity].y <= 0.0) {
+      if (world->health[playerEntity] > CombatEnemyDamage) {
+        world->health[playerEntity] -= CombatEnemyDamage;
+      } else {
+        world->health[playerEntity] = 0;
+      }
+      world->direction[entity].y = (double)CombatEnemyAttackCooldown;
     }
   }
 }
