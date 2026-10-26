@@ -27,14 +27,9 @@ typedef enum CombatSetting {
   CombatEnemyAttackCooldown = 30
 } CombatSetting;
 
-typedef enum EnemySetting {
-  EnemyNoticeDistance = 8
-} EnemySetting;
+typedef enum EnemySetting { EnemyNoticeDistance = 8 } EnemySetting;
 
-typedef enum WaveSetting {
-  WaveMaxRounds = 3,
-  WaveBonusAmmo = 24
-} WaveSetting;
+typedef enum WaveSetting { WaveMaxRounds = 3, WaveBonusAmmo = 24 } WaveSetting;
 
 typedef enum RenderSetting {
   RenderMinScreenWidth = 20,

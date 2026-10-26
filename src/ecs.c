@@ -2,9 +2,7 @@
 
 #include "ecs.h"
 
-void EcsInit(World *world) {
-  memset(world, 0, sizeof(*world));
-}
+void EcsInit(World *world) { memset(world, 0, sizeof(*world)); }
 
 Entity EcsCreate(World *world, uint32_t components) {
   if (components == 0) {

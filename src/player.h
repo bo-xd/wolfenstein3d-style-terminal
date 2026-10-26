@@ -10,5 +10,6 @@ typedef struct PlayerSettings {
 
 extern const PlayerSettings defaultPlayerSettings;
 
-void MovementSystem(World *world, Entity playerEntity, const GameMap *map, double amount);
+void MovementSystem(World *world, Entity playerEntity, const GameMap *map,
+                    double amount);
 void TurnSystem(World *world, Entity playerEntity, double angle);

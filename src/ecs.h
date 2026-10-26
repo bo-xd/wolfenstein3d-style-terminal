@@ -18,11 +18,7 @@ typedef enum ComponentMask {
   ComponentPickup = 1u << 5
 } ComponentMask;
 
-typedef enum PickupType {
-  PickupNone,
-  PickupAmmo,
-  PickupHealth
-} PickupType;
+typedef enum PickupType { PickupNone, PickupAmmo, PickupHealth } PickupType;
 
 typedef struct PlayerState {
   int ammo;

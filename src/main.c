@@ -18,29 +18,23 @@ static const double renderWallShadeDistanceScale = 1.5;
 static const double renderFloorDetailStartRatio = 0.75;
 static const double renderCeilingDetailStartRatio = 0.20;
 
-typedef enum GameState {
-  GamePlaying,
-  GameVictory,
-  GameOver
-} GameState;
+typedef enum GameState { GamePlaying, GameVictory, GameOver } GameState;
 
 static int colorsEnabled = 0;
 
 static const char *const victoryBanner[] = {
-  "V   V IIIII  CCC  TTTTT  OOO  RRRR  Y   Y",
-  "V   V   I   C       T   O   O R   R  Y Y ",
-  "V   V   I   C       T   O   O RRRR    Y  ",
-  " V V    I   C       T   O   O R R     Y  ",
-  "  V   IIIII  CCC    T    OOO  R  RR   Y  "
-};
+    "V   V IIIII  CCC  TTTTT  OOO  RRRR  Y   Y",
+    "V   V   I   C       T   O   O R   R  Y Y ",
+    "V   V   I   C       T   O   O RRRR    Y  ",
+    " V V    I   C       T   O   O R R     Y  ",
+    "  V   IIIII  CCC    T    OOO  R  RR   Y  "};
 
 static const char *const gameOverBanner[] = {
-  " GGGG   AAA  M   M EEEEE    OOO  V   V EEEEE RRRR ",
-  "G      A   A MM MM E       O   O V   V E     R   R",
-  "G  GG  AAAAA M M M EEEE    O   O V   V EEEE  RRRR ",
-  "G   G  A   A M   M E       O   O  V V  E     R R  ",
-  " GGGG  A   A M   M EEEEE    OOO    V   EEEEE R  RR"
-};
+    " GGGG   AAA  M   M EEEEE    OOO  V   V EEEEE RRRR ",
+    "G      A   A MM MM E       O   O V   V E     R   R",
+    "G  GG  AAAAA M M M EEEE    O   O V   V EEEE  RRRR ",
+    "G   G  A   A M   M E       O   O  V V  E     R R  ",
+    " GGGG  A   A M   M EEEEE    OOO    V   EEEEE R  RR"};
 
 static void InitColors(void) {
   if (!has_colors() || start_color() == ERR) {
@@ -138,9 +132,10 @@ static void RenderVictorySystem(int frame) {
   attroff(style);
 
   if (bannerY == targetY) {
-    const char *message = screenWidth >= 60 ?
-      "ALL 3 WAVES CLEARED - PRESS R TO RESTART OR Q/ESC TO QUIT" :
-      "R: RESTART | Q: QUIT";
+    const char *message =
+        screenWidth >= 60
+            ? "ALL 3 WAVES CLEARED - PRESS R TO RESTART OR Q/ESC TO QUIT"
+            : "R: RESTART | Q: QUIT";
     int row = targetY + bannerHeight + 2;
     int column = (screenWidth - (int)strlen(message)) / 2;
     if (column < 0) {
@@ -198,9 +193,9 @@ static void RenderGameOverSystem(int frame) {
   attroff(style);
 
   if (bannerY == targetY) {
-    const char *message = screenWidth >= 54 ?
-      "YOU DIED - PRESS R TO RESTART OR Q/ESC TO QUIT" :
-      "R: RESTART | Q: QUIT";
+    const char *message = screenWidth >= 54
+                              ? "YOU DIED - PRESS R TO RESTART OR Q/ESC TO QUIT"
+                              : "R: RESTART | Q: QUIT";
     int row = targetY + bannerHeight + 2;
     int column = (screenWidth - (int)strlen(message)) / 2;
     if (column < 0) {
@@ -223,12 +218,8 @@ static char CrosshairPixel(PlayerState player) {
   return '+';
 }
 
-static void RenderHud(
-  const World *world,
-  Entity playerEntity,
-  int currentWave,
-  int screenWidth
-) {
+static void RenderHud(const World *world, Entity playerEntity, int currentWave,
+                      int screenWidth) {
   PlayerState player = world->player[playerEntity];
   char hud[128];
   if (screenWidth < 60) {
@@ -250,17 +241,10 @@ static void RenderHud(
   attroff(hudStyle);
 }
 
-static void RenderSystem(
-  const World *world,
-  Entity playerEntity,
-  const GameMap *map,
-  int currentWave
-) {
-  if (!EcsHas(
-        world,
-        playerEntity,
-        ComponentPosition | ComponentDirection | ComponentPlayer
-      )) {
+static void RenderSystem(const World *world, Entity playerEntity,
+                         const GameMap *map, int currentWave) {
+  if (!EcsHas(world, playerEntity,
+              ComponentPosition | ComponentDirection | ComponentPlayer)) {
     return;
   }
 
@@ -271,7 +255,8 @@ static void RenderSystem(
   int screenWidth;
   getmaxyx(stdscr, screenHeight, screenWidth);
 
-  if (screenWidth < RenderMinScreenWidth || screenHeight < RenderMinScreenHeight) {
+  if (screenWidth < RenderMinScreenWidth ||
+      screenHeight < RenderMinScreenHeight) {
     erase();
     refresh();
     return;
@@ -279,18 +264,14 @@ static void RenderSystem(
 
   erase();
 
-  Vec2 cameraPlane = {
-    -playerDirection.y * defaultPlayerSettings.cameraFov,
-    playerDirection.x * defaultPlayerSettings.cameraFov
-  };
+  Vec2 cameraPlane = {-playerDirection.y * defaultPlayerSettings.cameraFov,
+                      playerDirection.x * defaultPlayerSettings.cameraFov};
   double zBuffer[screenWidth];
 
   for (int x = 0; x < screenWidth; x++) {
     double cameraX = 2.0 * x / screenWidth - 1.0;
-    Vec2 rayDirection = {
-      playerDirection.x + cameraPlane.x * cameraX,
-      playerDirection.y + cameraPlane.y * cameraX
-    };
+    Vec2 rayDirection = {playerDirection.x + cameraPlane.x * cameraX,
+                         playerDirection.y + cameraPlane.y * cameraX};
 
     RayHit rayHit = CastRay(map, playerPosition, rayDirection);
     double wallDistance = rayHit.distance;
@@ -330,10 +311,11 @@ static void RenderSystem(
         }
       } else if (y > screenHeight * renderCeilingDetailStartRatio &&
                  (x + y * RenderCeilingPatternYScale) %
-                   RenderCeilingPatternSpacing == 0) {
+                         RenderCeilingPatternSpacing ==
+                     0) {
         pixel = '.';
       }
-      
+
       chtype style = 0;
       if (colorsEnabled && y >= wallTop && y <= wallBottom) {
         style = COLOR_PAIR(shadeIndex + 1);
@@ -347,50 +329,25 @@ static void RenderSystem(
     }
   }
 
-  RenderEnemySystem(
-    world,
-    playerPosition,
-    playerDirection,
-    cameraPlane,
-    screenHeight,
-    screenWidth,
-    zBuffer,
-    colorsEnabled
-  );
-  RenderPickupSystem(
-    world,
-    playerPosition,
-    playerDirection,
-    cameraPlane,
-    screenHeight,
-    screenWidth,
-    zBuffer,
-    colorsEnabled
-  );
+  RenderEnemySystem(world, playerPosition, playerDirection, cameraPlane,
+                    screenHeight, screenWidth, zBuffer, colorsEnabled);
+  RenderPickupSystem(world, playerPosition, playerDirection, cameraPlane,
+                     screenHeight, screenWidth, zBuffer, colorsEnabled);
 
   chtype markerStyle = colorsEnabled ? COLOR_PAIR(PairWeaponFlash) : A_BOLD;
   char marker = CrosshairPixel(player);
-  mvaddch(screenHeight / 2, screenWidth / 2,
-          marker | markerStyle | A_BOLD);
+  mvaddch(screenHeight / 2, screenWidth / 2, marker | markerStyle | A_BOLD);
 
   DrawWeapon(screenHeight, screenWidth, player.shotTicks, colorsEnabled);
   RenderHud(world, playerEntity, currentWave, screenWidth);
   refresh();
 }
 
-static int ShouldQuit(int key) {
-  return key == 'q' || key == 'Q' || key == 27;
-}
+static int ShouldQuit(int key) { return key == 'q' || key == 'Q' || key == 27; }
 
-static void RestartGame(
-  GameMap *map,
-  World *world,
-  Entity *playerEntity,
-  GameState *gameState,
-  int *currentWave,
-  int *victoryFrame,
-  int *gameOverFrame
-) {
+static void RestartGame(GameMap *map, World *world, Entity *playerEntity,
+                        GameState *gameState, int *currentWave,
+                        int *victoryFrame, int *gameOverFrame) {
   if (ReadMap("src/assets/map.txt", map, world, playerEntity)) {
     *gameState = GamePlaying;
     *currentWave = 1;
@@ -399,48 +356,34 @@ static void RestartGame(
   }
 }
 
-static void HandleInput(
-  int key,
-  World *world,
-  Entity playerEntity,
-  const GameMap *map
-) {
+static void HandleInput(int key, World *world, Entity playerEntity,
+                        const GameMap *map) {
   switch (key) {
-    case 'w':
-    case 'W':
-    case KEY_UP:
-      MovementSystem(
-        world,
-        playerEntity,
-        map,
-        defaultPlayerSettings.moveSpeed
-      );
-      break;
-    case 's':
-    case 'S':
-    case KEY_DOWN:
-      MovementSystem(
-        world,
-        playerEntity,
-        map,
-        -defaultPlayerSettings.moveSpeed
-      );
-      break;
-    case 'a':
-    case 'A':
-    case KEY_LEFT:
-      TurnSystem(world, playerEntity, -defaultPlayerSettings.turnSpeed);
-      break;
-    case 'd':
-    case 'D':
-    case KEY_RIGHT:
-      TurnSystem(world, playerEntity, defaultPlayerSettings.turnSpeed);
-      break;
-    case ' ':
-    case 'f':
-    case 'F':
-      CombatSystem(world, playerEntity, map);
-      break;
+  case 'w':
+  case 'W':
+  case KEY_UP:
+    MovementSystem(world, playerEntity, map, defaultPlayerSettings.moveSpeed);
+    break;
+  case 's':
+  case 'S':
+  case KEY_DOWN:
+    MovementSystem(world, playerEntity, map, -defaultPlayerSettings.moveSpeed);
+    break;
+  case 'a':
+  case 'A':
+  case KEY_LEFT:
+    TurnSystem(world, playerEntity, -defaultPlayerSettings.turnSpeed);
+    break;
+  case 'd':
+  case 'D':
+  case KEY_RIGHT:
+    TurnSystem(world, playerEntity, defaultPlayerSettings.turnSpeed);
+    break;
+  case ' ':
+  case 'f':
+  case 'F':
+    CombatSystem(world, playerEntity, map);
+    break;
   }
 }
 
@@ -474,15 +417,8 @@ int main(void) {
       break;
     }
     if (key == 'r' || key == 'R') {
-      RestartGame(
-        &map,
-        &world,
-        &playerEntity,
-        &gameState,
-        &currentWave,
-        &victoryFrame,
-        &gameOverFrame
-      );
+      RestartGame(&map, &world, &playerEntity, &gameState, &currentWave,
+                  &victoryFrame, &gameOverFrame);
       continue;
     }
     if (gameState == GameVictory) {

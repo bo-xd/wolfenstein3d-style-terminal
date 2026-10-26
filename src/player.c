@@ -3,17 +3,12 @@
 #include "player.h"
 
 const PlayerSettings defaultPlayerSettings = {
-  .cameraFov = 0.66,
-  .moveSpeed = 0.20,
-  .turnSpeed = 0.12
-};
+    .cameraFov = 0.66, .moveSpeed = 0.20, .turnSpeed = 0.12};
 
-void MovementSystem(World *world, Entity playerEntity, const GameMap *map, double amount) {
-  if (!EcsHas(
-        world,
-        playerEntity,
-        ComponentPosition | ComponentDirection | ComponentPlayer
-      )) {
+void MovementSystem(World *world, Entity playerEntity, const GameMap *map,
+                    double amount) {
+  if (!EcsHas(world, playerEntity,
+              ComponentPosition | ComponentDirection | ComponentPlayer)) {
     return;
   }
 
@@ -31,11 +26,7 @@ void MovementSystem(World *world, Entity playerEntity, const GameMap *map, doubl
 }
 
 void TurnSystem(World *world, Entity playerEntity, double angle) {
-  if (!EcsHas(
-        world,
-        playerEntity,
-        ComponentDirection | ComponentPlayer
-      )) {
+  if (!EcsHas(world, playerEntity, ComponentDirection | ComponentPlayer)) {
     return;
   }
 

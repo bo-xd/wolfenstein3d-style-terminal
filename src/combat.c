@@ -6,17 +6,13 @@
 
 static const double enemyRadius = 0.30;
 
-static ShotResult Shoot(
-  World *world,
-  Vec2 playerPosition,
-  Vec2 shotDirection,
-  const GameMap *map
-) {
+static ShotResult Shoot(World *world, Vec2 playerPosition, Vec2 shotDirection,
+                        const GameMap *map) {
   double closestHitDistance =
-    CastRay(map, playerPosition, shotDirection).distance;
+      CastRay(map, playerPosition, shotDirection).distance;
   Entity targetEntity = EntityNone;
   const uint32_t requiredComponents =
-    ComponentPosition | ComponentHealth | ComponentEnemy;
+      ComponentPosition | ComponentHealth | ComponentEnemy;
 
   for (Entity entity = 0; entity < EcsMaxEntities; entity++) {
     if (!EcsHas(world, entity, requiredComponents)) {
@@ -26,18 +22,16 @@ static ShotResult Shoot(
     double relativeX = world->position[entity].x - playerPosition.x;
     double relativeY = world->position[entity].y - playerPosition.y;
     double distanceForward =
-      relativeX * shotDirection.x + relativeY * shotDirection.y;
-    double distanceSideways = fabs(
-      relativeX * shotDirection.y - relativeY * shotDirection.x
-    );
+        relativeX * shotDirection.x + relativeY * shotDirection.y;
+    double distanceSideways =
+        fabs(relativeX * shotDirection.y - relativeY * shotDirection.x);
 
     if (distanceForward <= 0.0 || distanceSideways > enemyRadius) {
       continue;
     }
 
-    double hitOffset = sqrt(
-      enemyRadius * enemyRadius - distanceSideways * distanceSideways
-    );
+    double hitOffset =
+        sqrt(enemyRadius * enemyRadius - distanceSideways * distanceSideways);
     double hitDistance = distanceForward - hitOffset;
     if (hitDistance >= 0.0 && hitDistance < closestHitDistance) {
       closestHitDistance = hitDistance;
@@ -71,19 +65,15 @@ int CombatTryFire(PlayerState *player) {
 
 void CombatSystem(World *world, Entity playerEntity, const GameMap *map) {
   const uint32_t requiredComponents =
-    ComponentPosition | ComponentDirection | ComponentPlayer;
+      ComponentPosition | ComponentDirection | ComponentPlayer;
   if (!EcsHas(world, playerEntity, requiredComponents) ||
       !CombatTryFire(&world->player[playerEntity])) {
     return;
   }
 
   PlayerState *player = &world->player[playerEntity];
-  ShotResult shotResult = Shoot(
-    world,
-    world->position[playerEntity],
-    world->direction[playerEntity],
-    map
-  );
+  ShotResult shotResult = Shoot(world, world->position[playerEntity],
+                                world->direction[playerEntity], map);
   if (shotResult == ShotKill) {
     player->score += CombatKillScore;
   }

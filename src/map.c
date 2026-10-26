@@ -25,10 +25,9 @@ static int HasClosedBorders(const GameMap *map) {
 }
 
 static Entity CreatePlayer(World *world, int tileX, int tileY) {
-  Entity playerEntity = EcsCreate(
-    world,
-    ComponentPosition | ComponentDirection | ComponentHealth | ComponentPlayer
-  );
+  Entity playerEntity =
+      EcsCreate(world, ComponentPosition | ComponentDirection |
+                           ComponentHealth | ComponentPlayer);
   if (playerEntity == EntityNone) {
     return EntityNone;
   }
@@ -41,10 +40,8 @@ static Entity CreatePlayer(World *world, int tileX, int tileY) {
 }
 
 static Entity CreateEnemy(World *world, int tileX, int tileY) {
-  Entity enemyEntity = EcsCreate(
-    world,
-    ComponentPosition | ComponentHealth | ComponentEnemy
-  );
+  Entity enemyEntity =
+      EcsCreate(world, ComponentPosition | ComponentHealth | ComponentEnemy);
   if (enemyEntity == EntityNone) {
     return EntityNone;
   }
@@ -54,16 +51,9 @@ static Entity CreateEnemy(World *world, int tileX, int tileY) {
   return enemyEntity;
 }
 
-static Entity CreatePickup(
-  World *world,
-  int tileX,
-  int tileY,
-  PickupType pickupType
-) {
-  Entity pickupEntity = EcsCreate(
-    world,
-    ComponentPosition | ComponentPickup
-  );
+static Entity CreatePickup(World *world, int tileX, int tileY,
+                           PickupType pickupType) {
+  Entity pickupEntity = EcsCreate(world, ComponentPosition | ComponentPickup);
   if (pickupEntity == EntityNone) {
     return EntityNone;
   }
@@ -73,7 +63,8 @@ static Entity CreatePickup(
   return pickupEntity;
 }
 
-int ReadMap(const char *path, GameMap *map, World *world, Entity *playerEntity) {
+int ReadMap(const char *path, GameMap *map, World *world,
+            Entity *playerEntity) {
   FILE *file = fopen(path, "rb");
   int foundPlayer = 0;
   int pickupCount = 0;
@@ -95,53 +86,52 @@ int ReadMap(const char *path, GameMap *map, World *world, Entity *playerEntity) 
     for (int x = 0; x < MapWidth; x++) {
       char tile = map->tiles[y][x];
       switch (tile) {
-        case 'P':
-          if (foundPlayer) {
-            goto invalidMap;
-          }
-          *playerEntity = CreatePlayer(world, x, y);
-          if (*playerEntity == EntityNone) {
-            goto invalidMap;
-          }
-          foundPlayer = 1;
-          map->tiles[y][x] = '.';
-          break;
-
-        case 'E': {
-          if (map->enemySpawnCount >= MapMaxEnemies ||
-              CreateEnemy(world, x, y) == EntityNone) {
-            goto invalidMap;
-          }
-          map->enemySpawns[map->enemySpawnCount++] = (Vec2){x + 0.5, y + 0.5};
-          map->tiles[y][x] = '.';
-          break;
-        }
-
-        case 'A':
-        case 'H': {
-          PickupType pickupType = tile == 'A' ? PickupAmmo : PickupHealth;
-          if (pickupCount >= MapMaxPickups ||
-              CreatePickup(world, x, y, pickupType) == EntityNone) {
-            goto invalidMap;
-          }
-          pickupCount++;
-          map->tiles[y][x] = '.';
-          break;
-        }
-
-        case '#':
-        case '.':
-          break;
-
-        default:
+      case 'P':
+        if (foundPlayer) {
           goto invalidMap;
+        }
+        *playerEntity = CreatePlayer(world, x, y);
+        if (*playerEntity == EntityNone) {
+          goto invalidMap;
+        }
+        foundPlayer = 1;
+        map->tiles[y][x] = '.';
+        break;
+
+      case 'E': {
+        if (map->enemySpawnCount >= MapMaxEnemies ||
+            CreateEnemy(world, x, y) == EntityNone) {
+          goto invalidMap;
+        }
+        map->enemySpawns[map->enemySpawnCount++] = (Vec2){x + 0.5, y + 0.5};
+        map->tiles[y][x] = '.';
+        break;
+      }
+
+      case 'A':
+      case 'H': {
+        PickupType pickupType = tile == 'A' ? PickupAmmo : PickupHealth;
+        if (pickupCount >= MapMaxPickups ||
+            CreatePickup(world, x, y, pickupType) == EntityNone) {
+          goto invalidMap;
+        }
+        pickupCount++;
+        map->tiles[y][x] = '.';
+        break;
+      }
+
+      case '#':
+      case '.':
+        break;
+
+      default:
+        goto invalidMap;
       }
     }
   }
 
   char extra[2];
-  if (fscanf(file, "%1s", extra) == 1 ||
-      !foundPlayer ||
+  if (fscanf(file, "%1s", extra) == 1 || !foundPlayer ||
       !HasClosedBorders(map)) {
     goto invalidMap;
   }

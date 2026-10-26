@@ -8,19 +8,10 @@ static const double enemyBaseMoveSpeed = 0.015;
 static const double enemySpeedVariation = 0.003;
 static const double enemyStopDistance = 0.75;
 static const double enemyAttackDistance = 0.90;
-static const int neighborOffsets[4][2] = {
-  {1, 0},
-  {-1, 0},
-  {0, 1},
-  {0, -1}
-};
+static const int neighborOffsets[4][2] = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
 
-static int IsTileOccupiedByEnemy(
-  const World *world,
-  Entity currentEntity,
-  int tileX,
-  int tileY
-) {
+static int IsTileOccupiedByEnemy(const World *world, Entity currentEntity,
+                                 int tileX, int tileY) {
   for (Entity other = 0; other < EcsMaxEntities; other++) {
     if (other == currentEntity ||
         !EcsHas(world, other, ComponentPosition | ComponentEnemy)) {
@@ -34,13 +25,11 @@ static int IsTileOccupiedByEnemy(
   return 0;
 }
 
-// Breadth-first search stores how many open tiles lead from each tile to the player.
-static void BuildPathDistances(
-  const GameMap *map,
-  int playerTileX,
-  int playerTileY,
-  int distanceToPlayer[MapHeight][MapWidth]
-) {
+// Breadth-first search stores how many open tiles lead from each tile to the
+// player.
+static void BuildPathDistances(const GameMap *map, int playerTileX,
+                               int playerTileY,
+                               int distanceToPlayer[MapHeight][MapWidth]) {
   int queueX[MapWidth * MapHeight];
   int queueY[MapWidth * MapHeight];
   int queueStart = 0;
@@ -68,13 +57,11 @@ static void BuildPathDistances(
     for (int neighborIndex = 0; neighborIndex < 4; neighborIndex++) {
       int nextX = tileX + neighborOffsets[neighborIndex][0];
       int nextY = tileY + neighborOffsets[neighborIndex][1];
-      if (IsWall(map, nextX, nextY) ||
-          distanceToPlayer[nextY][nextX] >= 0) {
+      if (IsWall(map, nextX, nextY) || distanceToPlayer[nextY][nextX] >= 0) {
         continue;
       }
 
-      distanceToPlayer[nextY][nextX] =
-        distanceToPlayer[tileY][tileX] + 1;
+      distanceToPlayer[nextY][nextX] = distanceToPlayer[tileY][tileX] + 1;
       queueX[queueEnd] = nextX;
       queueY[queueEnd] = nextY;
       queueEnd++;
@@ -82,24 +69,16 @@ static void BuildPathDistances(
   }
 }
 
-void EnemyMovementSystem(
-  World *world,
-  Entity playerEntity,
-  const GameMap *map,
-  int wave
-) {
+void EnemyMovementSystem(World *world, Entity playerEntity, const GameMap *map,
+                         int wave) {
   if (!EcsHas(world, playerEntity, ComponentPosition | ComponentPlayer)) {
     return;
   }
 
   Vec2 playerPosition = world->position[playerEntity];
   int distanceToPlayer[MapHeight][MapWidth];
-  BuildPathDistances(
-    map,
-    (int)playerPosition.x,
-    (int)playerPosition.y,
-    distanceToPlayer
-  );
+  BuildPathDistances(map, (int)playerPosition.x, (int)playerPosition.y,
+                     distanceToPlayer);
 
   for (Entity entity = 0; entity < EcsMaxEntities; entity++) {
     if (!EcsHas(world, entity, ComponentPosition | ComponentEnemy)) {
@@ -125,8 +104,8 @@ void EnemyMovementSystem(
 
     int tileX = (int)position->x;
     int tileY = (int)position->y;
-    int outsideMap = tileX < 0 || tileX >= MapWidth ||
-                     tileY < 0 || tileY >= MapHeight;
+    int outsideMap =
+        tileX < 0 || tileX >= MapWidth || tileY < 0 || tileY >= MapHeight;
     if (outsideMap) {
       continue;
     }
@@ -153,12 +132,8 @@ void EnemyMovementSystem(
         continue;
       }
 
-      int candidateOccupied = IsTileOccupiedByEnemy(
-        world,
-        entity,
-        candidateX,
-        candidateY
-      );
+      int candidateOccupied =
+          IsTileOccupiedByEnemy(world, entity, candidateX, candidateY);
 
       int shouldSelect = 0;
       if (candidateDistance < bestDistance) {
@@ -187,13 +162,11 @@ void EnemyMovementSystem(
     }
 
     double waveSpeedBonus = (wave > 1 ? (wave - 1) * 0.004 : 0.0);
-    double moveSpeed = enemyBaseMoveSpeed + waveSpeedBonus +
-      (entity % 2 == 0 ? enemySpeedVariation : -enemySpeedVariation);
+    double moveSpeed =
+        enemyBaseMoveSpeed + waveSpeedBonus +
+        (entity % 2 == 0 ? enemySpeedVariation : -enemySpeedVariation);
     double step = fmin(moveSpeed, moveDistance) / moveDistance;
-    Vec2 newPosition = {
-      position->x + moveX * step,
-      position->y + moveY * step
-    };
+    Vec2 newPosition = {position->x + moveX * step, position->y + moveY * step};
     if (!IsWall(map, newPosition.x, newPosition.y)) {
       *position = newPosition;
     }
@@ -202,10 +175,8 @@ void EnemyMovementSystem(
 
 void SpawnEnemyWave(World *world, const GameMap *map) {
   for (int i = 0; i < map->enemySpawnCount; i++) {
-    Entity enemyEntity = EcsCreate(
-      world,
-      ComponentPosition | ComponentHealth | ComponentEnemy
-    );
+    Entity enemyEntity =
+        EcsCreate(world, ComponentPosition | ComponentHealth | ComponentEnemy);
     if (enemyEntity == EntityNone) {
       break;
     }
@@ -217,22 +188,16 @@ void SpawnEnemyWave(World *world, const GameMap *map) {
 }
 
 void EnemyAttackSystem(World *world, Entity playerEntity) {
-  if (!EcsHas(
-        world,
-        playerEntity,
-        ComponentPosition | ComponentHealth | ComponentPlayer
-      )) {
+  if (!EcsHas(world, playerEntity,
+              ComponentPosition | ComponentHealth | ComponentPlayer)) {
     return;
   }
 
   Vec2 playerPosition = world->position[playerEntity];
 
   for (Entity entity = 0; entity < EcsMaxEntities; entity++) {
-    if (!EcsHas(
-          world,
-          entity,
-          ComponentPosition | ComponentHealth | ComponentEnemy
-        )) {
+    if (!EcsHas(world, entity,
+                ComponentPosition | ComponentHealth | ComponentEnemy)) {
       continue;
     }
 
@@ -258,7 +223,7 @@ void EnemyAttackSystem(World *world, Entity playerEntity) {
 int CountEnemies(const World *world) {
   int enemyCount = 0;
   const uint32_t requiredComponents =
-    ComponentPosition | ComponentHealth | ComponentEnemy;
+      ComponentPosition | ComponentHealth | ComponentEnemy;
 
   for (Entity entity = 0; entity < EcsMaxEntities; entity++) {
     if (EcsHas(world, entity, requiredComponents)) {
@@ -278,25 +243,19 @@ static char EnemyPixelForHeight(double verticalRatio) {
   return '|';
 }
 
-void RenderEnemySystem(
-  const World *world,
-  Vec2 playerPosition,
-  Vec2 playerDirection,
-  Vec2 cameraPlane,
-  int screenHeight,
-  int screenWidth,
-  const double *zBuffer,
-  int colorsEnabled
-) {
-  double determinant = cameraPlane.x * playerDirection.y -
-                       playerDirection.x * cameraPlane.y;
+void RenderEnemySystem(const World *world, Vec2 playerPosition,
+                       Vec2 playerDirection, Vec2 cameraPlane, int screenHeight,
+                       int screenWidth, const double *zBuffer,
+                       int colorsEnabled) {
+  double determinant =
+      cameraPlane.x * playerDirection.y - playerDirection.x * cameraPlane.y;
   if (fabs(determinant) < 0.0001) {
     return;
   }
 
   double inverseDeterminant = 1.0 / determinant;
   const uint32_t requiredComponents =
-    ComponentPosition | ComponentHealth | ComponentEnemy;
+      ComponentPosition | ComponentHealth | ComponentEnemy;
 
   for (Entity entity = 0; entity < EcsMaxEntities; entity++) {
     if (!EcsHas(world, entity, requiredComponents)) {
@@ -305,10 +264,10 @@ void RenderEnemySystem(
 
     double relativeX = world->position[entity].x - playerPosition.x;
     double relativeY = world->position[entity].y - playerPosition.y;
-    double cameraSpaceX = inverseDeterminant *
-      (playerDirection.y * relativeX - playerDirection.x * relativeY);
+    double cameraSpaceX = inverseDeterminant * (playerDirection.y * relativeX -
+                                                playerDirection.x * relativeY);
     double depth = inverseDeterminant *
-      (-cameraPlane.y * relativeX + cameraPlane.x * relativeY);
+                   (-cameraPlane.y * relativeX + cameraPlane.x * relativeY);
 
     if (depth <= 0.1) {
       continue;
@@ -320,8 +279,7 @@ void RenderEnemySystem(
       spriteWidth = 1;
     }
 
-    int screenX = (int)((screenWidth / 2.0) *
-                        (1.0 + cameraSpaceX / depth));
+    int screenX = (int)((screenWidth / 2.0) * (1.0 + cameraSpaceX / depth));
     int top = screenHeight / 2 - spriteHeight / 2;
     int bottom = screenHeight / 2 + spriteHeight / 2;
     int left = screenX - spriteWidth / 2;
@@ -342,10 +300,10 @@ void RenderEnemySystem(
       double horizontalRatio = (x - left + 0.5) / (right - left + 1);
       for (int y = top; y <= bottom; y++) {
         double verticalRatio = (y - top + 0.5) / (bottom - top + 1);
-        int outsideHead = verticalRatio < 0.25 &&
-                          fabs(horizontalRatio - 0.5) > 0.25;
-        int betweenLegs = verticalRatio > 0.75 &&
-                          fabs(horizontalRatio - 0.5) < 0.15;
+        int outsideHead =
+            verticalRatio < 0.25 && fabs(horizontalRatio - 0.5) > 0.25;
+        int betweenLegs =
+            verticalRatio > 0.75 && fabs(horizontalRatio - 0.5) < 0.15;
         if (outsideHead || betweenLegs) {
           continue;
         }

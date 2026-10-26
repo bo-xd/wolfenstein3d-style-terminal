@@ -25,7 +25,7 @@ static ColorPairId PickupColorPairForType(PickupType pickupType) {
 
 void PickupSystem(World *world, Entity playerEntity) {
   const uint32_t playerComponents =
-    ComponentPosition | ComponentHealth | ComponentPlayer;
+      ComponentPosition | ComponentHealth | ComponentPlayer;
   if (!EcsHas(world, playerEntity, playerComponents)) {
     return;
   }
@@ -36,10 +36,8 @@ void PickupSystem(World *world, Entity playerEntity) {
       continue;
     }
 
-    int isPlayerTile = IsOnSameTile(
-      world->position[playerEntity],
-      world->position[entity]
-    );
+    int isPlayerTile =
+        IsOnSameTile(world->position[playerEntity], world->position[entity]);
     if (!isPlayerTile) {
       continue;
     }
@@ -62,18 +60,12 @@ void PickupSystem(World *world, Entity playerEntity) {
   }
 }
 
-void RenderPickupSystem(
-  const World *world,
-  Vec2 playerPosition,
-  Vec2 playerDirection,
-  Vec2 cameraPlane,
-  int screenHeight,
-  int screenWidth,
-  const double *zBuffer,
-  int colorsEnabled
-) {
-  double determinant = cameraPlane.x * playerDirection.y -
-                       playerDirection.x * cameraPlane.y;
+void RenderPickupSystem(const World *world, Vec2 playerPosition,
+                        Vec2 playerDirection, Vec2 cameraPlane,
+                        int screenHeight, int screenWidth,
+                        const double *zBuffer, int colorsEnabled) {
+  double determinant =
+      cameraPlane.x * playerDirection.y - playerDirection.x * cameraPlane.y;
   if (fabs(determinant) < 0.0001) {
     return;
   }
@@ -86,10 +78,10 @@ void RenderPickupSystem(
 
     double relativeX = world->position[entity].x - playerPosition.x;
     double relativeY = world->position[entity].y - playerPosition.y;
-    double cameraSpaceX = inverseDeterminant *
-      (playerDirection.y * relativeX - playerDirection.x * relativeY);
+    double cameraSpaceX = inverseDeterminant * (playerDirection.y * relativeX -
+                                                playerDirection.x * relativeY);
     double depth = inverseDeterminant *
-      (-cameraPlane.y * relativeX + cameraPlane.x * relativeY);
+                   (-cameraPlane.y * relativeX + cameraPlane.x * relativeY);
     if (depth <= 0.1) {
       continue;
     }
@@ -98,8 +90,7 @@ void RenderPickupSystem(
     if (spriteSize < 1) {
       spriteSize = 1;
     }
-    int screenX = (int)((screenWidth / 2.0) *
-                        (1.0 + cameraSpaceX / depth));
+    int screenX = (int)((screenWidth / 2.0) * (1.0 + cameraSpaceX / depth));
     int top = screenHeight / 2 + spriteSize / 2;
     int left = screenX - spriteSize / 2;
     char pixel = PickupPixelForType(world->pickup[entity]);
@@ -113,8 +104,9 @@ void RenderPickupSystem(
         if (y < 0) {
           continue;
         }
-        chtype style = colorsEnabled && COLOR_PAIRS > (int)colorPair ?
-          COLOR_PAIR(colorPair) : A_BOLD;
+        chtype style = colorsEnabled && COLOR_PAIRS > (int)colorPair
+                           ? COLOR_PAIR(colorPair)
+                           : A_BOLD;
         mvaddch(y, x, pixel | style | A_BOLD);
       }
     }
