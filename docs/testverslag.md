@@ -63,6 +63,29 @@ Bij Windows Terminal draaide de game in de Linux-omgeving van Docker. Dit is dus
 
 De automatische tests en het compileren met GCC en Clang zijn geslaagd. De eerder vastgelegde handmatige controles in Ghostty en Windows Terminal via Docker zijn geslaagd. Hits, misses, schade, wall occlusion en kills hebben nog geen eigen automatische test.
 
+## Verbetervoorstellen uit playtest-feedback
+
+Ik heb een medestudent, Timothey Hoff, de game laten playtesten via Docker.
+Hij gaf op 28 september 2026 per e-mail twee verbetervoorstellen (de e-mail
+bewaar ik als bewijs):
+
+1. De gameplay was te makkelijk doordat de vijanden allemaal hetzelfde pad
+   namen en tegelijk op de speler afkwamen. Voorstel: laat vijanden
+   verschillende paden nemen en niet allemaal op hetzelfde moment aankomen.
+2. Na het verslaan van alle vijanden moest hij de game helemaal opnieuw via
+   Docker starten. Voorstel: een herstartknop in de game zelf.
+
+Beide voorstellen heb ik verwerkt (zie ook GitHub Issue #3):
+
+| Verbetervoorstel | Aanpassing |
+| --- | --- |
+| Gevarieerde vijandpaden | Vijanden kiezen bij gelijke afstanden verschillende kanten rond muren, wijken uit bij bezette vakken en bewegen met variërende snelheden, zodat ze niet meer allemaal tegelijk aankomen. |
+| Herstartknop in de game | Een herstartfunctie toegevoegd met de toets `R`, tijdens het spelen en na een overwinning of nederlaag. |
+
+Na deze aanpassingen is de game opnieuw handmatig getest; de vijanden bewegen
+gevarieerder en de game kan direct met `R` opnieuw worden gestart zonder de
+container opnieuw te starten.
+
 ## Nog handmatig te controleren
 
 - Controleer of het gecentreerde pistool en mondingsvuur visueel goed aansluiten op het vizier.
