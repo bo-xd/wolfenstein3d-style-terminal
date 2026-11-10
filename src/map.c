@@ -77,7 +77,6 @@ int ReadMap(const char *path, GameMap *map, World *world,
   }
 
   for (int y = 0; y < MapHeight; y++) {
-    // The map is fixed at 16 columns, so fscanf may read at most 16 characters.
     int readLine = fscanf(file, "%16s", map->tiles[y]);
     if (readLine != 1 || strlen(map->tiles[y]) != MapWidth) {
       goto invalidMap;

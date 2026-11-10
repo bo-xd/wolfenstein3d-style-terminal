@@ -1,18 +1,9 @@
 #include <ncurses.h>
 #include <string.h>
 
+#include "art.h"
 #include "game_config.h"
 #include "weapon.h"
-
-static const char *const weaponArt[] = {
-    "         /--\\         ",  "        | () |        ",
-    "       /======\\       ",  "      /|======|\\      ",
-    "     | |######| |     ",   "     | |######| |     ",
-    "     | |%%%%%%| |     ",   "     \\@@|%%%%|@@/     ",
-    "      \\@@\\%%/@@/      ", "       \\@@@@@@/       "};
-
-static const char *const muzzleFlashArt[] = {
-    "      \\  |  /      ", "     --- * ---     ", "      /  |  \\      "};
 
 typedef enum WeaponSize {
   WeaponHeight = sizeof(weaponArt) / sizeof(weaponArt[0]),
