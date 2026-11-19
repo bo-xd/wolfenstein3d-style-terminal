@@ -6,21 +6,16 @@
 static void MakeOpenMap(GameMap *map) {
   for (int y = 0; y < MapHeight; y++) {
     for (int x = 0; x < MapWidth; x++) {
-      int isBorder = x == 0 || x == MapWidth - 1 ||
-                     y == 0 || y == MapHeight - 1;
+      int isBorder =
+          x == 0 || x == MapWidth - 1 || y == 0 || y == MapHeight - 1;
       map->tiles[y][x] = isBorder ? '#' : '.';
     }
     map->tiles[y][MapWidth] = '\0';
   }
 }
 
-static void AddPlayerAndEnemy(
-  World *world,
-  Entity *player,
-  Entity *enemy,
-  Vec2 playerPosition,
-  Vec2 enemyPosition
-) {
+static void AddPlayerAndEnemy(World *world, Entity *player, Entity *enemy,
+                              Vec2 playerPosition, Vec2 enemyPosition) {
   EcsInit(world);
   *player = EcsCreate(world, ComponentPosition | ComponentPlayer);
   *enemy = EcsCreate(world, ComponentPosition | ComponentEnemy);
@@ -35,14 +30,16 @@ int main(void) {
   Entity enemy;
 
   MakeOpenMap(&map);
-  AddPlayerAndEnemy(&world, &player, &enemy, (Vec2){2.5, 2.5}, (Vec2){4.5, 2.5});
+  AddPlayerAndEnemy(&world, &player, &enemy, (Vec2){2.5, 2.5},
+                    (Vec2){4.5, 2.5});
   EnemyMovementSystem(&world, player, &map, 1);
   assert(world.position[enemy].x < 4.5);
   assert(fabs(world.position[enemy].y - 2.5) < 0.0001);
 
   MakeOpenMap(&map);
   map.tiles[2][3] = '#';
-  AddPlayerAndEnemy(&world, &player, &enemy, (Vec2){2.5, 2.5}, (Vec2){4.5, 2.5});
+  AddPlayerAndEnemy(&world, &player, &enemy, (Vec2){2.5, 2.5},
+                    (Vec2){4.5, 2.5});
   EnemyMovementSystem(&world, player, &map, 1);
   assert(fabs(world.position[enemy].x - 4.5) < 0.0001);
   assert(fabs(world.position[enemy].y - 2.5) > 0.0001);
@@ -53,18 +50,21 @@ int main(void) {
   map.tiles[4][3] = '#';
   map.tiles[4][5] = '#';
   map.tiles[5][4] = '#';
-  AddPlayerAndEnemy(&world, &player, &enemy, (Vec2){2.5, 2.5}, (Vec2){4.5, 4.5});
+  AddPlayerAndEnemy(&world, &player, &enemy, (Vec2){2.5, 2.5},
+                    (Vec2){4.5, 4.5});
   EnemyMovementSystem(&world, player, &map, 1);
   assert(fabs(world.position[enemy].x - 4.5) < 0.0001);
   assert(fabs(world.position[enemy].y - 4.5) < 0.0001);
 
   MakeOpenMap(&map);
-  AddPlayerAndEnemy(&world, &player, &enemy, (Vec2){2.5, 2.5}, (Vec2){3.1, 2.5});
+  AddPlayerAndEnemy(&world, &player, &enemy, (Vec2){2.5, 2.5},
+                    (Vec2){3.1, 2.5});
   EnemyMovementSystem(&world, player, &map, 1);
   assert(fabs(world.position[enemy].x - 3.1) < 0.0001);
 
   MakeOpenMap(&map);
-  AddPlayerAndEnemy(&world, &player, &enemy, (Vec2){2.5, 2.5}, (Vec2){12.5, 2.5});
+  AddPlayerAndEnemy(&world, &player, &enemy, (Vec2){2.5, 2.5},
+                    (Vec2){12.5, 2.5});
   EnemyMovementSystem(&world, player, &map, 1);
   assert(fabs(world.position[enemy].x - 12.5) < 0.0001);
 
@@ -98,8 +98,10 @@ int main(void) {
   assert(world.position[chaser].y > 2.5);
 
   EcsInit(&world);
-  player = EcsCreate(&world, ComponentPosition | ComponentHealth | ComponentPlayer);
-  enemy = EcsCreate(&world, ComponentPosition | ComponentHealth | ComponentEnemy);
+  player =
+      EcsCreate(&world, ComponentPosition | ComponentHealth | ComponentPlayer);
+  enemy =
+      EcsCreate(&world, ComponentPosition | ComponentHealth | ComponentEnemy);
   world.position[player] = (Vec2){2.5, 2.5};
   world.health[player] = 100;
   world.position[enemy] = (Vec2){2.5, 3.0};
@@ -131,11 +133,13 @@ int main(void) {
   assert(CountEnemies(&world) == 2);
 
   MakeOpenMap(&map);
-  AddPlayerAndEnemy(&world, &player, &enemy, (Vec2){2.5, 2.5}, (Vec2){5.5, 2.5});
+  AddPlayerAndEnemy(&world, &player, &enemy, (Vec2){2.5, 2.5},
+                    (Vec2){5.5, 2.5});
   EnemyMovementSystem(&world, player, &map, 1);
   double xWave1 = world.position[enemy].x;
 
-  AddPlayerAndEnemy(&world, &player, &enemy, (Vec2){2.5, 2.5}, (Vec2){5.5, 2.5});
+  AddPlayerAndEnemy(&world, &player, &enemy, (Vec2){2.5, 2.5},
+                    (Vec2){5.5, 2.5});
   EnemyMovementSystem(&world, player, &map, 3);
   double xWave3 = world.position[enemy].x;
   assert(xWave3 < xWave1);

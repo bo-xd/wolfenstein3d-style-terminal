@@ -27,9 +27,11 @@ int main(void) {
   assert(ammoPickups == 1);
   assert(healthPickups == 1);
   assert(!ReadMap("tests/assets/map-zonder-speler.txt", &map, &world, &player));
-  assert(!ReadMap("tests/assets/map-verkeerde-breedte.txt", &map, &world, &player));
+  assert(!ReadMap("tests/assets/map-verkeerde-breedte.txt", &map, &world,
+                  &player));
   assert(!ReadMap("tests/assets/map-open-rand.txt", &map, &world, &player));
-  assert(!ReadMap("tests/assets/map-onbekend-teken.txt", &map, &world, &player));
+  assert(
+      !ReadMap("tests/assets/map-onbekend-teken.txt", &map, &world, &player));
   assert(!ReadMap("tests/assets/bestaat-niet.txt", &map, &world, &player));
   return 0;
 }

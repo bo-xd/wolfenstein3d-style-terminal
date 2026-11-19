@@ -14,10 +14,8 @@ static Entity AddPickup(World *world, PickupType type, Vec2 position) {
 int main(void) {
   World world;
   EcsInit(&world);
-  Entity player = EcsCreate(
-    &world,
-    ComponentPosition | ComponentHealth | ComponentPlayer
-  );
+  Entity player =
+      EcsCreate(&world, ComponentPosition | ComponentHealth | ComponentPlayer);
   assert(player != EntityNone);
   world.position[player] = (Vec2){2.2, 3.8};
   world.player[player].ammo = 3;

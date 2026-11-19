@@ -1,0 +1,5 @@
+# Opmaak van de C-code, zie docs/GDD.md (Code conventions)
+# LLVM-stijl: 2 spaties inspringen, max 80 tekens per regel, { op dezelfde regel
+BasedOnStyle: LLVM
+IndentWidth: 2
+ColumnLimit: 80

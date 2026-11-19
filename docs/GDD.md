@@ -28,6 +28,24 @@ Muren houden de speler en vijanden tegen. Je kunt ook niet door een muur heen sc
 - `R`: de game herstarten
 - `Q` of `Esc`: afsluiten
 
+## User stories
+
+Elke user story heeft acceptatiecriteria. Een story is klaar als alle criteria kloppen en de testcases uit het [testverslag](testverslag.md#testplan) slagen.
+
+| # | User story | Acceptatiecriteria | Prioriteit | Status |
+| --- | --- | --- | --- | --- |
+| US1 | Als speler wil ik door een 3D-doolhof kunnen lopen en draaien, zodat ik het level kan verkennen. | Lopen met W/S of pijltjes, draaien met A/D of pijltjes, muren worden in 3D getekend en verder weg donkerder. | P0 | Klaar |
+| US2 | Als speler wil ik niet door muren kunnen lopen, zodat het level klopt. | De speler stopt bij een muur en bij de rand van de map. | P0 | Klaar |
+| US3 | Als speler wil ik op vijanden kunnen schieten, zodat ik ze kan verslaan. | Schieten met Spatie of F kost 1 kogel, zonder kogels kan je niet schieten, een muur houdt een schot tegen, een vijand is dood na 2 keer raken en geeft 100 punten. | P0 | Klaar |
+| US4 | Als speler wil ik dat vijanden mij zoeken en aanvallen, zodat de game een uitdaging is. | Vijanden lopen om muren heen naar de speler, nemen verschillende paden, komen niet allemaal tegelijk aan en doen 10 schade van dichtbij. | P1 | Klaar |
+| US5 | Als speler wil ik munitie en gezondheid kunnen oppakken, zodat ik langer kan overleven. | Over een pickup lopen geeft 12 kogels of 25 gezondheid, gezondheid gaat nooit boven 100, een gezondheidspickup blijft liggen als je al 100 hebt. | P2 | Klaar, HUD nog handmatig controleren |
+| US6 | Als speler wil ik meerdere rondes spelen die moeilijker worden, zodat de game niet te kort is. | 3 waves, elke wave snellere vijanden en 24 bonuskogels, de HUD toont WAVE 1/3, na wave 3 win je. | P1 | Klaar |
+| US7 | Als speler wil ik in één oogopslag zien hoe ik ervoor sta, zodat ik weet wanneer ik moet oppassen. | De HUD toont gezondheid, kogels, score, wave en hoeveel vijanden nog leven. | P1 | Klaar |
+| US8 | Als speler wil ik een overwinnings- en Game Over-scherm zien en opnieuw kunnen starten, zodat ik niet de hele game opnieuw hoef op te starten. | VICTORY-scherm na wave 3, Game Over bij 0 gezondheid, herstarten met R tijdens en na het spelen, afsluiten met Q of Esc. | P1 | Klaar |
+| US9 | Als speler wil ik de game op elke computer kunnen spelen, zodat ik niet per se Linux nodig heb. | De game draait via Docker, ook op Windows en macOS. | P1 | Klaar |
+| US10 | Als ontwikkelaar wil ik het level in een tekstbestand kunnen aanpassen, zodat ik geen code hoef te veranderen. | De map wordt uit `src/assets/map.txt` gelezen, een map zonder speler, met een open rand, een verkeerde breedte of een onbekend teken wordt geweigerd. | P0 | Klaar |
+| US11 | Als speler wil ik deuren kunnen openen, zodat het level uit kamers bestaat. | Zie de kaart "Deuren toevoegen" op het kanban-bord. | P2 | Backlog |
+
 ## Hoe het eruitziet
 
 De muren, vloer, vijanden en het wapen bestaan uit ASCII-tekens. Muren die verder weg zijn worden donkerder. Hierdoor lijkt de wereld 3D.
@@ -51,6 +69,33 @@ De code is verdeeld over meerdere bestanden:
 - `weapon.c` tekent het wapen.
 
 De map staat in `src/assets/map.txt`.
+
+## Code conventions
+
+De opmaak staat vast in `.clang-format` (LLVM-stijl) en de naamgeving in `.clang-tidy`. GitHub Actions controleert bij elke push of de code zich hieraan houdt.
+
+Hoe je clang-tidy instelt met een `.clang-tidy`-bestand heb ik opgezocht op https://sarcasm.github.io/notes/dev/clang-tidy.html.
+
+| Onderdeel | Regel | Voorbeeld |
+| --- | --- | --- |
+| Functies | CamelCase met een hoofdletter | `CastRay`, `EnemyMovementSystem` |
+| Systems in de ECS | eindigen op `System` | `PickupSystem`, `RenderVictorySystem` |
+| Structs, enums en typedefs | CamelCase met een hoofdletter | `Vec2`, `RayHit`, `ShotResult` |
+| Enum-waarden | CamelCase, beginnen met de naam van de enum | `RaySideX`, `ShotKill` |
+| Variabelen, parameters en struct-velden | camelCase met een kleine letter | `playerTileX`, `distanceToPlayer` |
+| Constanten | `static const` in camelCase | `enemyBaseMoveSpeed` |
+| Macros | CamelCase | `EcsMaxEntities`, `EntityNone` |
+| Bestanden | kleine letters, één module per bestand met een eigen `.h` | `enemy.c`, `enemy.h`, `game_config.h` |
+| Opmaak | 2 spaties inspringen, maximaal 80 tekens per regel, `{` op dezelfde regel | |
+| Commentaar | alleen uitleggen waarom iets zo werkt, niet wat er staat | `// Breadth-first search stores how many open tiles lead from each tile to the player.` |
+| Geheugen | geen `malloc`, entities staan in vaste arrays van `EcsMaxEntities` | `world->position[entity]` |
+
+Controleren kan lokaal met:
+
+```bash
+clang-format --dry-run --Werror src/*.c src/*.h tests/*.c
+clang-tidy src/*.c -- -std=c11 -Isrc
+```
 
 ## Testen
 
